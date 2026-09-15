@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>IronTrack Pro — Squad Aura & Gains Suite</title>
   
-  <!-- PWA & Mobile Web App Meta Tags -->
   <meta name="theme-color" content="#020617" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,6 +15,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Firebase Cloud Sync (Online & Offline Persistence) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
     tailwind.config = {
@@ -41,7 +44,6 @@
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
-    /* Read-Only State for Past Dates */
     .locked-past-mode input:not(#activeDateInput),
     .locked-past-mode select:not(#userSelect):not(#chartMetricSelect):not(#phaseSelect):not(#daySelect),
     .locked-past-mode button:not([data-allow-locked]):not([onclick^="switchTab"]):not([onclick^="switchUser"]):not([onclick^="goToToday"]) {
@@ -53,7 +55,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased pb-24 md:pb-8">
 
-  <!-- TOP RESPONSIVE APP BAR -->
+  <!-- TOP APP BAR -->
   <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-2.5 shadow-md">
     <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
       <div class="flex items-center space-x-2.5">
@@ -77,20 +79,21 @@
         <button onclick="switchTab('charts')" id="dnav-charts" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">Charts 📈</button>
       </div>
 
-      <!-- User, Avatar Customizer & Date Selectors -->
+      <!-- User, Cloud Status & Date Selectors -->
       <div class="flex items-center gap-1.5">
+        <span id="cloudStatusIndicator" title="Cloud Sync Status" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+        
         <input type="date" id="activeDateInput" class="bg-slate-800 border border-slate-700 text-[11px] rounded-lg px-2 py-1 text-slate-200 focus:outline-none font-mono" />
         
         <select id="userSelect" onchange="switchUser(this.value)" class="bg-slate-800 border border-slate-700 text-[11px] rounded-lg px-2 py-1 text-emerald-400 font-bold focus:outline-none max-w-[140px] truncate">
-          <!-- JS Generated -->
         </select>
 
         <button onclick="openAvatarModal()" data-allow-locked="true" title="Customize Avatar Name & Style" class="p-1.5 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-800/50 rounded-lg text-purple-300 text-xs font-bold transition">
           🎨 Avatar
         </button>
 
-        <button onclick="promptAppInstall()" id="installPwaBtn" data-allow-locked="true" class="hidden sm:flex items-center gap-1 text-[11px] px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-lg font-bold hover:bg-emerald-500/30">
-          📲 App
+        <button onclick="openCloudModal()" data-allow-locked="true" title="Cloud Database Settings" class="p-1.5 bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-800/50 rounded-lg text-cyan-300 text-xs font-bold transition">
+          ☁️ Sync
         </button>
       </div>
     </div>
@@ -110,15 +113,10 @@
     <button onclick="cancelTimer()" class="bg-slate-950 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✕</button>
   </div>
 
-  <!-- MAIN APP CONTAINER -->
   <main id="mainAppContent" class="max-w-6xl mx-auto px-3.5 pt-4">
 
-    <!-- ============================================================== -->
-    <!-- TAB 1: HUB (AURA DASHBOARD, 4H FIXED SCREEN TIME, STATS) -->
-    <!-- ============================================================== -->
+    <!-- TAB 1: HUB -->
     <div id="tab-hub" class="tab-pane active space-y-4">
-
-      <!-- USER AVATAR BADGE CARD -->
       <section class="bg-gradient-to-r from-purple-950/30 via-slate-900 to-slate-900 border border-purple-800/30 rounded-2xl p-3.5 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div id="hubAvatarEmojiDisplay" class="w-12 h-12 rounded-2xl bg-purple-900/40 border border-purple-700/50 flex items-center justify-center text-2xl shadow-md">
@@ -155,7 +153,6 @@
           </div>
         </div>
 
-        <!-- Task Completion Pill Matrix -->
         <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5 text-center pt-2 border-t border-slate-800/80">
           <div id="pillWorkout" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
             <div class="text-slate-500">Lift (2.5)</div>
@@ -188,7 +185,7 @@
         </div>
       </section>
 
-      <!-- SCREEN TIME WITH STRICT 4-HOUR CAP -->
+      <!-- STRICT 4-HOUR CAP SCREEN TIME -->
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -244,14 +241,10 @@
           <span class="text-2xl">👟</span>
         </div>
       </section>
-
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 2: DIET & AUTO CALORIE COUNTER -->
-    <!-- ============================================================== -->
+    <!-- TAB 2: DIET -->
     <div id="tab-diet" class="tab-pane space-y-4">
-
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
         <div class="flex items-center justify-between">
           <div>
@@ -324,14 +317,10 @@
           <button onclick="adjustWater(0.5)" class="px-2.5 py-1 bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded text-xs font-bold">+0.5L</button>
         </div>
       </section>
-
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 3: WORKOUT TRACKER & FORM CUES -->
-    <!-- ============================================================== -->
+    <!-- TAB 3: WORKOUT -->
     <div id="tab-workout" class="tab-pane space-y-4">
-
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -355,15 +344,10 @@
           </button>
         </div>
       </section>
-
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 4: SQUAD & SAVAGE INDIAN HALL OF SHAME -->
-    <!-- ============================================================== -->
+    <!-- TAB 4: SQUAD & SHAME -->
     <div id="tab-leaderboard" class="tab-pane space-y-4">
-
-      <!-- SAVAGE INDIAN HALL OF SHAME WITH ZERO-FAIL MEME ENGINE -->
       <section class="bg-gradient-to-br from-rose-950/60 via-slate-900 to-purple-950/50 border-2 border-rose-600/60 rounded-3xl p-4 md:p-5 shadow-2xl relative overflow-hidden">
         <div class="flex items-center justify-between pb-3 border-b border-rose-800/40">
           <div class="flex items-center gap-2">
@@ -380,18 +364,10 @@
           </button>
         </div>
 
-        <!-- Dynamic Content Card -->
         <div class="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/90 p-3.5 rounded-2xl border border-rose-900/50">
-          
-          <!-- Zero-Fail Meme Visual Frame -->
           <div class="md:col-span-5 space-y-1.5">
             <div id="shameMemeFrame" class="relative rounded-xl overflow-hidden border border-rose-800/60 h-48 md:h-52 bg-slate-900 flex items-center justify-center">
-              <img id="shameMemeImg" 
-                   referrerpolicy="no-referrer"
-                   src="" 
-                   alt="Indian Gym Meme" 
-                   class="w-full h-full object-cover object-top" 
-                   onerror="handleMemeImgError(this)" />
+              <img id="shameMemeImg" src="" alt="Indian Gym Meme" class="w-full h-full object-cover object-top" onerror="handleMemeImgError(this)" />
               <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-2">
                 <span id="shameMemeTitle" class="text-[10px] font-black uppercase text-amber-300 font-mono tracking-wide">
                   Tollywood Legend — Brahmanandam
@@ -403,21 +379,18 @@
             </div>
           </div>
 
-          <!-- Text Breakdown -->
           <div class="md:col-span-7 space-y-2.5">
             <div class="flex flex-wrap items-center justify-between gap-1 border-b border-slate-800 pb-2">
               <span class="text-xs font-black text-rose-400" id="shamedPersonName">🚨 Target: Sameer (Reels Merchant)</span>
               <span class="text-[10px] font-mono text-slate-400 font-bold" id="shamedPointsGap">Behind #1 by 0 pts</span>
             </div>
 
-            <!-- Punchline Dialog -->
             <div class="p-2.5 bg-rose-950/30 rounded-xl border border-rose-800/40">
               <p id="shameDialogue" class="text-xs md:text-sm font-extrabold text-amber-300 italic leading-snug">
                 "Brahmanandam: 'Rey! Entha pani chesav ra! Intha screen time pettukuni em peekudham ani!'"
               </p>
             </div>
 
-            <!-- Savage Humiliation Paragraph -->
             <p id="shameRoastText" class="text-xs text-slate-200 leading-relaxed">
               Doomscrolled way past the 4-hour strict cap straight into severe muscle catabolism. Left leg and right leg currently filing for divorce over zero squat volume.
             </p>
@@ -428,11 +401,10 @@
               </button>
             </div>
           </div>
-
         </div>
       </section>
 
-      <!-- SQUAD LEADERBOARD TABLE -->
+      <!-- SQUAD LEADERBOARD -->
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
         <div class="flex items-center justify-between">
           <div>
@@ -456,7 +428,7 @@
         </div>
       </section>
 
-      <!-- AI COACH & SQUAD ROASTER -->
+      <!-- AI COACH -->
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[380px]">
         <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-bold text-white">
           <span>🤖 AI Fitness & Desi Squad Roaster</span>
@@ -472,14 +444,10 @@
           <button type="submit" class="px-3 py-1.5 bg-emerald-600 text-slate-950 font-bold rounded-lg text-xs">Send</button>
         </form>
       </section>
-
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 5: CHARTS & ANALYTICS -->
-    <!-- ============================================================== -->
+    <!-- TAB 5: CHARTS -->
     <div id="tab-charts" class="tab-pane space-y-4">
-
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
           <div>
@@ -504,12 +472,11 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs" id="chartStatsSummary"></div>
       </section>
-
     </div>
 
   </main>
 
-  <!-- BOTTOM MOBILE NAVIGATION BAR -->
+  <!-- BOTTOM MOBILE NAVIGATION -->
   <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-2 shadow-2xl">
     <div class="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
       <button onclick="switchTab('hub')" id="mnav-hub" class="flex flex-col items-center justify-center py-1 rounded-xl text-emerald-400 font-bold text-[10px] transition">
@@ -530,7 +497,27 @@
     </div>
   </nav>
 
-  <!-- MODAL: CUSTOMIZE AVATAR & NAME -->
+  <!-- MODAL: CLOUD DATABASE SETUP -->
+  <div id="cloudModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+          <span>☁️</span> Real-Time Cloud Sync Setup
+        </h3>
+        <button onclick="closeCloudModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <p class="text-[11px] text-slate-400 leading-relaxed">
+        To sync workouts and points across phones and laptops live, create a free project on <strong>console.firebase.google.com</strong>, enable Firestore Database (test mode), and paste your config JSON below. If empty, the app runs offline locally.
+      </p>
+      <textarea id="firebaseConfigInput" rows="5" placeholder='Paste your Firebase config object here...' class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none"></textarea>
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeCloudModal()" class="px-3 py-1 text-xs text-slate-400">Cancel</button>
+        <button onclick="saveCloudConfig()" class="px-4 py-1.5 bg-emerald-600 text-slate-950 font-bold rounded-xl text-xs transition">Connect Cloud</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AVATAR CUSTOMIZER -->
   <div id="avatarModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-800">
@@ -548,7 +535,7 @@
 
         <div>
           <label class="text-slate-400">Avatar Title / Persona</label>
-          <input type="text" id="avatarTitleInput" placeholder="e.g. Protein Rakshak, GigaChad, Bench Pandit" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none" />
+          <input type="text" id="avatarTitleInput" placeholder="e.g. GigaChad, Bench Pandit" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none" />
         </div>
 
         <div>
@@ -564,7 +551,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ADD CUSTOM FOOD -->
+  <!-- MODAL: CUSTOM FOOD -->
   <div id="customFoodModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-3">
       <div class="flex justify-between items-center text-sm font-bold text-white">
@@ -648,7 +635,7 @@
   <!-- APPLICATION SCRIPT -->
   <script>
     /* ==========================================================================
-       1. ZERO-FAIL INDIAN MEME TEMPLATE ENGINE WITH INLINE SVG POSTERS
+       1. ZERO-FAIL MEME ENGINE
        ========================================================================== */
     function makeMemeSvgPoster(title, character, emoji, bg1, bg2) {
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
@@ -728,7 +715,7 @@
     }
 
     /* ==========================================================================
-       2. WORKOUT & FOOD DATA STAPLES
+       2. WORKOUT & FOOD DATA
        ========================================================================== */
     const PRESET_FOODS = [
       { id: "egg_whole", name: "Whole Egg", serving: "1 egg", calories: 75, protein: 6, carbs: 0.5, fats: 5, fiber: 0 },
@@ -813,8 +800,8 @@
     /* ==========================================================================
        3. SQUAD STORAGE WITH CLEAN START & HARDCODED 4.0H LIMIT
        ========================================================================== */
-    const STORAGE_KEY = "irontrack_squad_clean_v11";
-    const HARDCODED_SCREEN_LIMIT = 4.0; // STRICT 4-HOUR CAP
+    const STORAGE_KEY = "irontrack_squad_clean_v12";
+    const HARDCODED_SCREEN_LIMIT = 4.0;
 
     function getTodayDateString() {
       const now = new Date();
@@ -838,10 +825,13 @@
       currentPhase: "p1",
       currentDay: "d1",
       currentTab: "hub",
-      geminiApiKey: ""
+      geminiApiKey: "",
+      firebaseConfigString: ""
     };
 
     let progressChartInstance = null;
+    let db = null;
+    let isCloudActive = false;
 
     function isPastDate(dateStr) {
       return dateStr < getTodayDateString();
@@ -857,14 +847,15 @@
       }
       appState.selectedDate = getTodayDateString();
       initCleanSquadState();
+      initCloudFirebase();
     }
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       updateUI();
+      pushStateToCloud();
     }
 
-    // Initialize clean starting profiles without fake history so everyone begins fresh today!
     function initCleanSquadState() {
       const todayStr = getTodayDateString();
       appState.users.forEach(u => {
@@ -919,7 +910,81 @@
     }
 
     /* ==========================================================================
-       4. STRICT 4-HOUR CAP DOOMSCROLL & AURA POINT ALGORITHM
+       4. FIREBASE CLOUD REAL-TIME SYNC + OFFLINE PERSISTENCE
+       ========================================================================== */
+    function initCloudFirebase() {
+      const statusIndicator = document.getElementById("cloudStatusIndicator");
+      if (!appState.firebaseConfigString) {
+        statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
+        statusIndicator.title = "Offline Mode (Local device cache)";
+        return;
+      }
+
+      try {
+        let configObj;
+        try {
+          configObj = JSON.parse(appState.firebaseConfigString);
+        } catch(e) {
+          eval("configObj = " + appState.firebaseConfigString);
+        }
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(configObj);
+        }
+        db = firebase.firestore();
+
+        // Enable offline persistence
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+        // Real-time listener
+        db.collection("irontrack_squad").doc("shared_state").onSnapshot((doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            if (data && data.users) {
+              appState.users = data.users;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+              updateUI();
+            }
+          } else {
+            db.collection("irontrack_squad").doc("shared_state").set({ users: appState.users });
+          }
+          isCloudActive = true;
+          statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+          statusIndicator.title = "Cloud Online: Real-time sync active";
+        }, () => {
+          isCloudActive = false;
+          statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+          statusIndicator.title = "Cloud Offline: Using offline cache";
+        });
+      } catch (err) {
+        statusIndicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+        statusIndicator.title = "Cloud Config Error";
+      }
+    }
+
+    function pushStateToCloud() {
+      if (db && isCloudActive && navigator.onLine) {
+        db.collection("irontrack_squad").doc("shared_state").set({ users: appState.users }, { merge: true }).catch(() => {});
+      }
+    }
+
+    function openCloudModal() {
+      document.getElementById("firebaseConfigInput").value = appState.firebaseConfigString || "";
+      document.getElementById("cloudModal").classList.remove("hidden");
+    }
+    function closeCloudModal() {
+      document.getElementById("cloudModal").classList.add("hidden");
+    }
+    function saveCloudConfig() {
+      appState.firebaseConfigString = document.getElementById("firebaseConfigInput").value.trim();
+      closeCloudModal();
+      saveState();
+      initCloudFirebase();
+      alert("Cloud database settings saved! Connecting...");
+    }
+
+    /* ==========================================================================
+       5. STRICT 4-HOUR CAP DOOMSCROLL & AURA POINT ALGORITHM
        ========================================================================== */
     function calculateDayPoints(log) {
       if (!log) return { base: 0, penalty: 0, bonus: 0, net: 0 };
@@ -949,7 +1014,6 @@
 
       if (log.weight) basePoints += 0.75;
 
-      // STRICT 4-HOUR CAP CALCULATION
       const actualST = log.screenTime || 0;
       let screenPenalty = 0;
 
@@ -972,9 +1036,6 @@
       };
     }
 
-    /* ==========================================================================
-       5. PAST DATE GUARD & CONTROLLERS
-       ========================================================================== */
     function checkPastDateGuard() {
       if (isPastDate(appState.selectedDate)) {
         alert("🔒 This is a past date! Historical records are locked and cannot be edited.");
@@ -1064,7 +1125,6 @@
         container.appendChild(card);
       });
 
-      // Update Hall of Shame with the Lowest Scorer
       const lastPlace = userScores[userScores.length - 1];
       const firstPlace = userScores[0];
       const gap = Math.round((firstPlace.total - lastPlace.total) * 10) / 10;
@@ -1079,7 +1139,7 @@
       const meme = SAVAGE_INDIAN_MEMES[idx % SAVAGE_INDIAN_MEMES.length];
       const imgEl = document.getElementById("shameMemeImg");
       imgEl.onerror = null;
-      imgEl.src = meme.svgFallback; // Always reliable SVG poster
+      imgEl.src = meme.svgFallback;
       document.getElementById("shameMemeTitle").textContent = meme.title;
       document.getElementById("shameDialogue").textContent = `"${meme.dialogue}"`;
       document.getElementById("shameRoastText").textContent = meme.roast;
@@ -1104,7 +1164,7 @@
     }
 
     /* ==========================================================================
-       7. AVATAR & NAME CUSTOMIZATION MODAL
+       7. AVATAR & DIET LOGIC
        ========================================================================== */
     const AVAILABLE_AVATAR_EMOJIS = ["🦁", "🦍", "⚡", "👑", "🦏", "💀", "🏋️", "🔥", "🐅", "🗿", "🥊", "🕶️"];
     let selectedAvatarEmoji = "🦁";
@@ -1155,9 +1215,6 @@
       saveState();
     }
 
-    /* ==========================================================================
-       8. DIET AUTO-COUNTER LOGIC
-       ========================================================================== */
     function renderQuickAddGrid() {
       const grid = document.getElementById("quickAddGrid");
       grid.innerHTML = "";
@@ -1276,9 +1333,6 @@
       closeCustomFoodModal();
     }
 
-    /* ==========================================================================
-       9. FIBER, WATER, STEPS & WEIGHT
-       ========================================================================== */
     function renderFiberSeedsTracker() {
       const container = document.getElementById("fiberSeedsContainer");
       container.innerHTML = "";
@@ -1343,7 +1397,7 @@
     }
 
     /* ==========================================================================
-       10. WORKOUT TRACKER RENDERING
+       8. WORKOUT TRACKER & RENDERING
        ========================================================================== */
     function renderDaySelect() {
       const daySelect = document.getElementById("daySelect");
@@ -1443,7 +1497,7 @@
     }
 
     /* ==========================================================================
-       11. CHARTS (CHART.JS)
+       9. CHARTS (CHART.JS)
        ========================================================================== */
     function renderAnalyticsCharts() {
       const canvas = document.getElementById("progressChart");
@@ -1540,7 +1594,7 @@
     }
 
     /* ==========================================================================
-       12. TIMER & AUDIO
+       10. TIMER & CHIME
        ========================================================================== */
     let timerInt = null, timerLeft = 0;
     function triggerChime() {
@@ -1575,7 +1629,7 @@
     function cancelTimer() { clearInterval(timerInt); document.getElementById("timerBar").classList.add("hidden"); }
 
     /* ==========================================================================
-       13. RESPONSIVE TABS & UI UPDATE WITH PAST-DATE LOCKING
+       11. TABS & UI UPDATE
        ========================================================================== */
     function switchTab(tabId) {
       appState.currentTab = tabId;
@@ -1604,7 +1658,6 @@
       const log = getActiveDayLog();
       const past = isPastDate(appState.selectedDate);
 
-      // Manage Locked Past-Date Visuals & Warning
       const banner = document.getElementById("pastDateLockedBanner");
       const mainContainer = document.getElementById("mainAppContent");
       if (past) {
@@ -1615,7 +1668,6 @@
         mainContainer.classList.remove("locked-past-mode");
       }
 
-      // Update User Selector
       const select = document.getElementById("userSelect");
       select.innerHTML = "";
       appState.users.forEach(u => {
@@ -1627,13 +1679,11 @@
         select.appendChild(opt);
       });
 
-      // Update Hub Profile Badge
       document.getElementById("hubAvatarEmojiDisplay").textContent = user.avatarEmoji || "🦁";
       document.getElementById("hubAvatarNameDisplay").textContent = user.name;
       document.getElementById("hubAvatarTitleDisplay").textContent = user.avatarTitle || "GigaChad";
       document.getElementById("hubUserWeightDisplay").textContent = (user.currentWeight || 60.0) + " kg";
 
-      // Calculate Daily Points
       const score = calculateDayPoints(log);
       document.getElementById("auraPointsTotalDisplay").textContent = score.net.toFixed(1);
 
@@ -1652,7 +1702,6 @@
       document.getElementById("valPillFiber").textContent = ((log.fiberDone||[]).length >= 3) ? "0.75 ✓" : "0";
       document.getElementById("valPillWeight").textContent = log.weight ? "0.75 ✓" : "0";
 
-      // 4-Hour Screen Time Display
       const st = log.screenTime || 0;
       document.getElementById("screenTimeSlider").value = st;
       const hours = Math.floor(st);
@@ -1740,7 +1789,7 @@
     }
 
     /* ==========================================================================
-       14. AI COACH & SQUAD ROASTER
+       12. AI COACH & SQUAD ROASTER
        ========================================================================== */
     async function handleAiSubmit(e) {
       e.preventDefault();
@@ -1811,7 +1860,7 @@
     }
 
     /* ==========================================================================
-       15. PWA INSTALLATION PROMPT
+       13. PWA INSTALLATION PROMPT
        ========================================================================== */
     let deferredPrompt = null;
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -1836,7 +1885,7 @@
     }
 
     /* ==========================================================================
-       16. INIT & BOOT
+       14. INIT & BOOT
        ========================================================================== */
     const dInput = document.getElementById("activeDateInput");
     dInput.max = getTodayDateString();
