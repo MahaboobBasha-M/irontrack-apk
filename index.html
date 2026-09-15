@@ -70,13 +70,12 @@
 <body class="text-slate-100 min-h-screen font-sans antialiased pb-28 md:pb-10">
 
   <!-- ============================================================== -->
-  <!-- AESTHETIC SPLASH / OPENING SCREEN -->
+  <!-- AESTHETIC APP OPENING SCREEN / SPLASH -->
   <!-- ============================================================== -->
-  <div id="appSplashScreen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-700">
+  <div id="appSplashScreen" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-700 pointer-events-none">
     <div class="relative flex flex-col items-center">
-      <!-- Aesthetic Minimalist Light Crest Icon -->
-      <div class="w-20 h-20 rounded-3xl bg-slate-900 border border-emerald-500/30 p-4 shadow-2xl flex items-center justify-center relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 via-transparent to-cyan-500/10"></div>
+      <div class="w-20 h-20 rounded-3xl bg-slate-900 border border-emerald-500/40 p-4 shadow-2xl flex items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/15 via-transparent to-cyan-500/15"></div>
         <svg class="w-11 h-11 text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.45)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity="0.3"/>
           <path d="M7 6v12M17 6v12M3 10v4M21 10v4M7 12h10"/>
@@ -90,14 +89,130 @@
     </div>
   </div>
 
+  <!-- ============================================================== -->
+  <!-- 2-STEP FIRST-RUN ONBOARDING WIZARD -->
+  <!-- ============================================================== -->
+  <div id="onboardingScreen" class="hidden fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900/95 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 relative">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="text-xs font-black uppercase tracking-wider text-emerald-400" id="onboardStepLabel">Step 1 of 2: Physical Metrics</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <div id="stepDot1" class="w-6 h-1.5 rounded-full bg-emerald-400 transition-all duration-300"></div>
+          <div id="stepDot2" class="w-2 h-1.5 rounded-full bg-slate-700 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- STEP 1: Name, Age, Height, Current Weight -->
+      <div id="onboardStep1" class="space-y-4">
+        <div>
+          <h2 class="text-base font-black text-white">Create Your Iron Persona</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Enter your baseline stats to configure hypertrophy targets.</p>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="text-slate-300 font-semibold block mb-1">Your Name / Call-sign</label>
+            <input type="text" id="obName" placeholder="e.g. Masood" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-emerald-500 transition" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Age (Years)</label>
+              <input type="number" id="obAge" placeholder="22" min="12" max="90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-bold font-mono focus:outline-none focus:border-emerald-500 transition" />
+            </div>
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Height (cm)</label>
+              <input type="number" id="obHeight" placeholder="175" min="100" max="250" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-bold font-mono focus:outline-none focus:border-emerald-500 transition" />
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-300 font-semibold block mb-1">Starting Weight (kg)</label>
+            <input type="number" id="obStartWeight" step="0.5" placeholder="60.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-bold font-mono focus:outline-none focus:border-emerald-500 transition" />
+          </div>
+        </div>
+
+        <button onclick="goToOnboardStep(2)" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center justify-center gap-1.5">
+          Continue to Diet & Training ➔
+        </button>
+      </div>
+
+      <!-- STEP 2: Veg/Non-Veg, Gym Days (Max 5), Target Weight -->
+      <div id="onboardStep2" class="hidden space-y-4">
+        <div>
+          <h2 class="text-base font-black text-white">Diet & Weekly Routine</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Customize your nutrition and schedule rest days.</p>
+        </div>
+
+        <div class="space-y-3.5 text-xs">
+          <!-- Diet Selection -->
+          <div>
+            <label class="text-slate-300 font-semibold block mb-1.5">Dietary Protocol</label>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" onclick="selectObDiet('veg')" id="dietBtnVeg" class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center transition hover:border-slate-700">
+                <span class="text-2xl mb-1">🥗</span>
+                <span class="font-bold text-white text-xs">Vegetarian</span>
+                <span class="text-[9px] text-slate-400 mt-0.5">Paneer, Soya, Dal, Seeds</span>
+              </button>
+              <button type="button" onclick="selectObDiet('non-veg')" id="dietBtnNonVeg" class="p-3 bg-emerald-950/40 border border-emerald-500 rounded-2xl flex flex-col items-center justify-center text-center transition">
+                <span class="text-2xl mb-1">🍗</span>
+                <span class="font-bold text-emerald-300 text-xs">Non-Vegetarian</span>
+                <span class="text-[9px] text-emerald-400/80 mt-0.5">Chicken, Eggs, Fish, Whey</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Weekly Gym Days: Capped at 5 Days -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-slate-300 font-semibold">Weekly Gym Days</label>
+              <span class="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono font-bold">
+                Rest is Critical (Max 5d)
+              </span>
+            </div>
+            
+            <div class="grid grid-cols-5 gap-1.5 text-center font-mono">
+              <button type="button" onclick="selectObGymDays(1)" id="daysBtn1" class="py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold transition">1d</button>
+              <button type="button" onclick="selectObGymDays(2)" id="daysBtn2" class="py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold transition">2d</button>
+              <button type="button" onclick="selectObGymDays(3)" id="daysBtn3" class="py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold transition">3d</button>
+              <button type="button" onclick="selectObGymDays(4)" id="daysBtn4" class="py-2.5 bg-emerald-500 text-slate-950 border border-emerald-400 rounded-xl font-bold transition">4d</button>
+              <button type="button" onclick="selectObGymDays(5)" id="daysBtn5" class="py-2.5 bg-slate-950 border border-slate-800 rounded-xl font-bold transition">5d</button>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Growth requires recovery. Maintain at least 2 complete rest days every week.</p>
+          </div>
+
+          <!-- Target Weight Goal -->
+          <div>
+            <label class="text-slate-300 font-semibold block mb-1">Target Growth Goal (kg)</label>
+            <input type="number" id="obTargetWeight" step="0.5" placeholder="68.0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white font-bold font-mono focus:outline-none focus:border-emerald-500 transition" />
+            <p class="text-[10px] text-emerald-400 mt-1 font-mono">Target steady gains (+0.25kg/week) on a clean 3,000 kcal surplus.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button onclick="goToOnboardStep(1)" class="w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
+            ← Back
+          </button>
+          <button onclick="finalizeOnboarding()" class="w-2/3 py-3 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95">
+            Lock In & Enter Arena 🔥
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- TOP APP BAR -->
-  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-3.5 py-2.5 shadow-lg">
+  <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-3.5 py-2.5 shadow-lg">
     <div class="max-w-4xl mx-auto space-y-2">
       
-      <!-- Top Row: Aesthetic Soft Light Emblem, Group Badge & Action Buttons -->
+      <!-- Top Row: Logo, Group Badge & Header Actions -->
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2.5 min-w-0">
-          <!-- Aesthetic Modern Emblem -->
           <div class="w-9 h-9 rounded-xl bg-slate-900 border border-emerald-500/40 p-1.5 shadow-md shadow-emerald-500/10 flex items-center justify-center shrink-0">
             <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12" />
@@ -115,9 +230,7 @@
           </div>
         </div>
 
-        <!-- Header Actions: Share Group Link, Avatar & Cloud Sync -->
         <div class="flex items-center gap-1.5 shrink-0">
-          <!-- Desktop Nav -->
           <div class="hidden md:flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-semibold mr-1">
             <button onclick="switchTab('hub')" id="dnav-hub" class="px-3 py-1 rounded-lg bg-emerald-500 text-slate-950 font-bold transition">Hub</button>
             <button onclick="switchTab('diet')" id="dnav-diet" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition">Diet</button>
@@ -126,17 +239,14 @@
             <button onclick="switchTab('charts')" id="dnav-charts" class="px-3 py-1 rounded-lg text-slate-400 hover:text-white transition">Trends 📈</button>
           </div>
 
-          <!-- Share Group Link Button -->
           <button onclick="openShareModal()" data-allow-locked="true" title="Share Group Invite Link" class="px-2.5 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-700/50 rounded-xl text-emerald-300 text-[11px] font-bold flex items-center gap-1 transition active:scale-95">
             <span>🔗</span> <span class="hidden sm:inline">Invite</span>
           </button>
 
-          <!-- Avatar Button -->
           <button onclick="openAvatarModal()" data-allow-locked="true" class="px-2.5 py-1.5 bg-purple-950/40 hover:bg-purple-900/60 border border-purple-800/50 rounded-xl text-purple-300 text-[11px] font-bold flex items-center gap-1 transition active:scale-95">
             <span>🎨</span> <span class="hidden sm:inline">Avatar</span>
           </button>
 
-          <!-- Sync Button -->
           <button onclick="openCloudModal()" data-allow-locked="true" class="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-cyan-300 text-[11px] font-bold flex items-center gap-1.5 transition active:scale-95">
             <span id="cloudStatusIndicator" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
             <span>Sync</span>
@@ -144,7 +254,7 @@
         </div>
       </div>
 
-      <!-- Bottom Row: Date & Active User Selector -->
+      <!-- Date & Active User Selector -->
       <div class="grid grid-cols-12 gap-2 pt-0.5">
         <div class="col-span-5 sm:col-span-4">
           <input type="date" id="activeDateInput" class="w-full bg-slate-900 border border-slate-800 text-[11px] rounded-xl px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-emerald-500 font-mono transition" />
@@ -190,7 +300,9 @@
               <span id="hubAvatarNameDisplay" class="font-extrabold text-sm text-white truncate">Masood</span>
               <span id="hubAvatarTitleDisplay" class="text-[9px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 font-bold border border-purple-500/30 shrink-0">Host (GigaChad)</span>
             </div>
-            <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">Weight: <span id="hubUserWeightDisplay" class="text-emerald-400 font-bold">60.0 kg</span> · Goal: 68 kg</p>
+            <p class="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
+              Weight: <span id="hubUserWeightDisplay" class="text-emerald-400 font-bold">60.0 kg</span> · Goal: <span id="hubUserTargetDisplay" class="text-cyan-400 font-bold">68.0 kg</span>
+            </p>
           </div>
         </div>
         <button onclick="openAvatarModal()" data-allow-locked="true" class="p-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-700/80 rounded-xl text-purple-300 text-xs font-bold shrink-0 transition active:scale-95">
@@ -307,9 +419,7 @@
 
     </div>
 
-    <!-- ============================================================== -->
     <!-- TAB 2: DIET -->
-    <!-- ============================================================== -->
     <div id="tab-diet" class="tab-pane space-y-3.5">
       <section class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 shadow-sm space-y-3">
         <div class="flex items-center justify-between gap-2">
@@ -385,13 +495,10 @@
       </section>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 3: WORKOUT (FIXED SYMMETRICAL DROPDOWN ALIGNMENT) -->
-    <!-- ============================================================== -->
+    <!-- TAB 3: WORKOUT (FIXED 2-COLUMN SYMMETRICAL DROPDOWNS) -->
     <div id="tab-workout" class="tab-pane space-y-3.5">
       <section class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 shadow-sm space-y-3">
         
-        <!-- FIXED 2-COLUMN GRID (NO OVERFLOW OR CROOKED TEXT) -->
         <div class="grid grid-cols-2 gap-2 w-full">
           <select id="phaseSelect" onchange="renderExercises()" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-xl px-2.5 py-2 text-emerald-400 font-bold focus:outline-none focus:border-emerald-500 truncate">
             <option value="p1">Phase 1: Foundation (M 1-2)</option>
@@ -416,12 +523,10 @@
       </section>
     </div>
 
-    <!-- ============================================================== -->
-    <!-- TAB 4: SQUAD & 10 LOADED MEMES (4-HOUR ROTATION + HOST CONTROLS) -->
-    <!-- ============================================================== -->
+    <!-- TAB 4: SQUAD & 10 ILLUSTRATED MEMES (AUTO-REFRESHES EVERY 4 HOURS) -->
     <div id="tab-leaderboard" class="tab-pane space-y-4">
       
-      <!-- SAVAGE HALL OF SHAME (10 LOADED MEMES WITH REAL NETWORK + EMBEDDED RESILIENCE) -->
+      <!-- SAVAGE HALL OF SHAME (10 LOADED MEMES + ZERO NETWORK DEPENDENCY FALLBACK) -->
       <section class="bg-gradient-to-br from-rose-950/50 via-slate-900 to-purple-950/40 border border-rose-600/50 rounded-3xl p-4 shadow-xl space-y-3">
         <div class="flex items-center justify-between pb-2.5 border-b border-rose-900/40 gap-2">
           <div class="flex items-center gap-2 min-w-0">
@@ -442,28 +547,22 @@
 
         <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center bg-slate-950/90 p-3.5 rounded-2xl border border-rose-900/40">
           
-          <!-- Guaranteed Visual Card (Never Empty / Never Broken) -->
+          <!-- Illustrated Meme Poster Box -->
           <div class="md:col-span-5 space-y-1.5">
-            <div id="shameMemeFrame" class="relative rounded-2xl overflow-hidden border border-rose-800/50 h-52 bg-slate-900 flex items-center justify-center shadow-inner">
+            <div id="shameMemeFrame" class="relative rounded-2xl overflow-hidden border border-rose-800/50 h-56 bg-slate-950 flex items-center justify-center shadow-inner">
               <img id="shameMemeImg" 
                    referrerpolicy="no-referrer"
                    crossorigin="anonymous"
                    src="" 
-                   alt="Loaded Meme" 
+                   alt="Illustrated Meme" 
                    class="w-full h-full object-cover object-center transition duration-300" 
                    onerror="handleMemeNetworkFallback(this)" />
-              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-2.5">
-                <span id="shameMemeTitle" class="text-[10px] font-black uppercase text-amber-300 font-mono tracking-wide block truncate">
-                  Loaded Meme
-                </span>
-              </div>
             </div>
             <div class="text-[9px] text-slate-500 font-mono truncate" id="shameMemeCredit">
               Meme Origin
             </div>
           </div>
 
-          <!-- Humiliation Breakdown -->
           <div class="md:col-span-7 space-y-2.5">
             <div class="flex items-center justify-between gap-1 border-b border-slate-800/80 pb-2">
               <span class="text-xs font-black text-rose-400 truncate" id="shamedPersonName">🚨 Target: No Slacker Found</span>
@@ -472,12 +571,12 @@
 
             <div class="p-3 bg-rose-950/30 rounded-xl border border-rose-900/50">
               <p id="shameDialogue" class="text-xs font-extrabold text-amber-300 italic leading-snug">
-                "Nobody is slacking yet! Add your gym buddies to the squad to crown this week's loser."
+                "Nobody is slacking yet! Invite your gym buddies to the squad to crown this week's loser."
               </p>
             </div>
 
             <p id="shameRoastText" class="text-xs text-slate-300 leading-relaxed">
-              Maintain your aura! Keep screen time under 4 hours, hit 140g protein and crush your session.
+              Maintain your aura! Keep screen time under 4 hours, hit 140g protein and crush your workout.
             </p>
 
             <button onclick="copySavageRoast()" data-allow-locked="true" class="w-full py-2.5 bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white font-black rounded-xl text-xs transition shadow-lg text-center flex items-center justify-center gap-1.5 active:scale-95">
@@ -488,7 +587,7 @@
         </div>
       </section>
 
-      <!-- SQUAD MANAGEMENT & LEADERBOARD (HOST CAN CREATE, ADD, AND KICK BUDDIES) -->
+      <!-- SQUAD MANAGEMENT & LEADERBOARD -->
       <section class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 space-y-3">
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <div>
@@ -529,7 +628,7 @@
         </div>
         <div id="aiChatLog" class="flex-1 overflow-y-auto space-y-2 py-2 text-xs pr-1">
           <div class="bg-slate-800/80 p-2.5 rounded-xl text-slate-200 border border-slate-700/60">
-            Namaste Masood! Ask me for cheap Indian protein stacks, hypertrophic form cues, or to roast a buddy who skipped leg day!
+            Namaste! I track your lifts, screen time and squad rank. Ask me for cheap Indian protein sources or for a custom roast for your gym bro!
           </div>
         </div>
         <form onsubmit="handleAiSubmit(event)" class="pt-2 border-t border-slate-800 flex gap-1.5">
@@ -540,9 +639,7 @@
 
     </div>
 
-    <!-- ============================================================== -->
     <!-- TAB 5: CHARTS -->
-    <!-- ============================================================== -->
     <div id="tab-charts" class="tab-pane space-y-3.5">
       <section class="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
@@ -570,8 +667,8 @@
 
   </main>
 
-  <!-- BOTTOM MOBILE NAVIGATION BAR -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1.5 shadow-2xl">
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 px-2 py-1.5 shadow-2xl">
     <div class="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
       <button onclick="switchTab('hub')" id="mnav-hub" class="flex flex-col items-center justify-center py-1 rounded-xl text-emerald-400 font-bold text-[10px] transition active:scale-90">
         <span class="text-base">⚡</span> Hub
@@ -591,10 +688,6 @@
     </div>
   </nav>
 
-  <!-- ============================================================== -->
-  <!-- MODALS -->
-  <!-- ============================================================== -->
-
   <!-- MODAL: SHARE SQUAD DIRECT LINK -->
   <div id="shareModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-3.5 shadow-2xl">
@@ -604,14 +697,10 @@
         </h3>
         <button onclick="closeShareModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
-
       <p class="text-xs text-slate-300 leading-relaxed">
-        Send this direct link to your gym buddies. When they tap it, they will join your squad group automatically!
+        Send this direct link to your gym buddies. When they tap it, they join your squad group directly!
       </p>
-
-      <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400 break-all select-all" id="shareLinkDisplay">
-      </div>
-
+      <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-emerald-400 break-all select-all" id="shareLinkDisplay"></div>
       <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
         <button onclick="copyShareInviteLink()" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1">
           📋 Copy Link
@@ -670,12 +759,10 @@
           <label class="text-slate-400">Your Name</label>
           <input type="text" id="avatarNameInput" placeholder="e.g. Masood" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold focus:outline-none" />
         </div>
-
         <div>
           <label class="text-slate-400">Title / Persona</label>
           <input type="text" id="avatarTitleInput" placeholder="e.g. GigaChad, Bench Pandit" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold focus:outline-none" />
         </div>
-
         <div>
           <label class="text-slate-400 block mb-1.5">Emoji Icon</label>
           <div class="grid grid-cols-6 gap-2 text-xl" id="avatarEmojiGrid"></div>
@@ -775,27 +862,189 @@
   <!-- ============================================================== -->
   <script>
     /* ==========================================================================
-       1. 10 LOADED SAVAGE MEMES (MOVIES, INSTA, X, CULTURE)
-       Guaranteed multi-source fallback ensures no broken images ever!
+       1. 10 STYLIZED VECTOR MEMES (EXACT COMPOSITION FROM USER SCREENSHOT)
        ========================================================================== */
-    function createFallbackDataUrl(title, quote, color) {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-        <rect width="600" height="400" fill="#090d16"/>
-        <circle cx="300" cy="140" r="80" fill="${color}" opacity="0.2"/>
-        <text x="300" y="160" font-family="sans-serif" font-size="64" text-anchor="middle">💀</text>
-        <rect x="30" y="270" width="540" height="100" rx="16" fill="#030712" opacity="0.95"/>
-        <text x="300" y="310" font-family="sans-serif" font-weight="900" font-size="20" fill="#fcd34d" text-anchor="middle">${title}</text>
-        <text x="300" y="345" font-family="sans-serif" font-weight="700" font-size="14" fill="#cbd5e1" text-anchor="middle">${quote}</text>
-      </svg>`;
-      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    function makeCharacterVectorPoster(type, quoteText, subtitleText) {
+      let characterGfx = "";
+
+      if (type === "vasooli") {
+        characterGfx = `
+          <!-- Hair Halo -->
+          <circle cx="250" cy="120" r="68" fill="#381d11" />
+          <!-- Head -->
+          <ellipse cx="250" cy="126" rx="46" ry="50" fill="#fbc89a" />
+          <!-- Red Bandana -->
+          <path d="M204 104 Q250 88 296 104 L298 116 Q250 100 202 116 Z" fill="#dc2626" />
+          <!-- Black Sunglasses -->
+          <rect x="214" y="118" width="30" height="20" rx="4" fill="#090d16" />
+          <rect x="256" y="118" width="30" height="20" rx="4" fill="#090d16" />
+          <line x1="244" y1="124" x2="256" y2="124" stroke="#090d16" stroke-width="4" />
+          <!-- Grin & Stubble -->
+          <path d="M216 142 Q250 174 284 142 Q250 184 216 142 Z" fill="#18181b" />
+          <!-- Rounded Torso -->
+          <path d="M195 210 C195 174, 305 174, 305 210 Z" fill="#18181b" />
+        `;
+      } else if (type === "babu") {
+        characterGfx = `
+          <!-- Side Tufts -->
+          <circle cx="204" cy="125" r="22" fill="#1e293b" />
+          <circle cx="296" cy="125" r="22" fill="#1e293b" />
+          <!-- Head -->
+          <ellipse cx="250" cy="125" rx="48" ry="54" fill="#fed7aa" />
+          <!-- Thick Round Glasses -->
+          <circle cx="228" cy="122" r="18" stroke="#0f172a" stroke-width="4.5" fill="#ffffff" fill-opacity="0.9" />
+          <circle cx="272" cy="122" r="18" stroke="#0f172a" stroke-width="4.5" fill="#ffffff" fill-opacity="0.9" />
+          <line x1="246" y1="122" x2="254" y2="122" stroke="#0f172a" stroke-width="5" />
+          <!-- Mustache -->
+          <path d="M226 150 Q250 142 274 150 Q250 162 226 150 Z" fill="#0f172a" />
+          <!-- White Kurta Torso -->
+          <path d="M195 210 C195 172, 305 172, 305 210 Z" fill="#f1f5f9" />
+        `;
+      } else if (type === "brahmi") {
+        characterGfx = `
+          <!-- Hair -->
+          <path d="M198 125 C195 72, 305 72, 302 125 Z" fill="#09090b" />
+          <!-- Head -->
+          <ellipse cx="250" cy="130" rx="48" ry="56" fill="#fed7aa" />
+          <!-- Shocked Eyebrows & Eyes -->
+          <path d="M220 110 Q232 100 242 112" stroke="#09090b" stroke-width="3.5" fill="none" />
+          <path d="M258 112 Q268 100 280 110" stroke="#09090b" stroke-width="3.5" fill="none" />
+          <circle cx="231" cy="120" r="5.5" fill="#09090b" />
+          <circle cx="269" cy="120" r="5.5" fill="#09090b" />
+          <!-- Open Shock Mouth -->
+          <ellipse cx="250" cy="156" rx="12" ry="16" fill="#881337" />
+          <!-- Slapping Palm / Facepalm Hand -->
+          <path d="M266 94 C292 80, 312 110, 292 135 L272 125 Z" fill="#fbcfe8" opacity="0.95" />
+          <path d="M195 210 C195 175, 305 175, 305 210 Z" fill="#1e293b" />
+        `;
+      } else if (type === "ramadhir") {
+        characterGfx = `
+          <!-- Grey Receding Hair -->
+          <ellipse cx="250" cy="115" rx="55" ry="50" fill="#64748b" />
+          <!-- Head -->
+          <ellipse cx="250" cy="126" rx="46" ry="52" fill="#fed7aa" />
+          <!-- Mafia Sunglasses -->
+          <rect x="216" y="118" width="28" height="16" rx="3" fill="#090d16" />
+          <rect x="256" y="118" width="28" height="16" rx="3" fill="#090d16" />
+          <line x1="244" y1="123" x2="256" y2="123" stroke="#090d16" stroke-width="3" />
+          <!-- Frown line -->
+          <path d="M236 156 Q250 148 264 156" stroke="#7c2d12" stroke-width="3" fill="none" />
+          <!-- Khadi Torso -->
+          <path d="M195 210 C195 174, 305 174, 305 210 Z" fill="#e2e8f0" />
+        `;
+      } else if (type === "majnu") {
+        characterGfx = `
+          <!-- Hair & Sunglasses -->
+          <path d="M204 116 C202 70, 298 70, 296 116 Z" fill="#09090b" />
+          <ellipse cx="250" cy="125" rx="46" ry="52" fill="#fde68a" />
+          <polygon points="216,116 244,116 240,136 220,136" fill="#020617" />
+          <polygon points="256,116 284,116 280,136 260,136" fill="#020617" />
+          <path d="M232 148 Q250 144 268 148" stroke="#09090b" stroke-width="3" fill="none" />
+          <!-- Printed Shirt Torso -->
+          <path d="M195 210 C195 172, 305 172, 305 210 Z" fill="#b45309" />
+        `;
+      } else if (type === "gigachad") {
+        characterGfx = `
+          <!-- Sharp Jaw GigaChad Face -->
+          <polygon points="214,80 286,80 280,130 250,185 220,130" fill="#38bdf8" opacity="0.3" />
+          <polygon points="220,95 280,95 272,145 250,175 228,145" fill="#0284c7" />
+          <rect x="230" y="115" width="16" height="6" fill="#0369a1" />
+          <rect x="254" y="115" width="16" height="6" fill="#0369a1" />
+          <path d="M236 150 L264 150" stroke="#0c4a6e" stroke-width="3" />
+          <path d="M190 210 C190 165, 310 165, 310 210 Z" fill="#0369a1" />
+        `;
+      } else if (type === "npc") {
+        characterGfx = `
+          <!-- Big Over-Ear Headphones & Perm Hair -->
+          <path d="M200 110 C190 60, 310 60, 300 110 Z" fill="#3f3f46" />
+          <ellipse cx="250" cy="125" rx="44" ry="50" fill="#fed7aa" />
+          <!-- Headphones -->
+          <rect x="194" y="110" width="14" height="28" rx="6" fill="#10b981" />
+          <rect x="292" y="110" width="14" height="28" rx="6" fill="#10b981" />
+          <path d="M200 110 Q250 78 300 110" stroke="#10b981" stroke-width="4" fill="none" />
+          <!-- Staring Phone Light -->
+          <circle cx="236" cy="122" r="5" fill="#38bdf8" />
+          <circle cx="264" cy="122" r="5" fill="#38bdf8" />
+          <path d="M195 210 C195 174, 305 174, 305 210 Z" fill="#18181b" />
+        `;
+      } else if (type === "guddu") {
+        characterGfx = `
+          <!-- Buzzcut & Angry Face -->
+          <ellipse cx="250" cy="124" rx="46" ry="52" fill="#fed7aa" />
+          <path d="M206 112 C204 76, 296 76, 294 112 Z" fill="#09090b" />
+          <!-- Angry Brows -->
+          <path d="M222 118 L244 126" stroke="#09090b" stroke-width="4" />
+          <path d="M278 118 L256 126" stroke="#09090b" stroke-width="4" />
+          <!-- Red Towel / Gamcha on Shoulder -->
+          <path d="M195 210 C195 172, 305 172, 305 210 Z" fill="#1c1917" />
+          <path d="M196 178 Q220 186 240 210" stroke="#dc2626" stroke-width="12" fill="none" />
+        `;
+      } else if (type === "crypto") {
+        characterGfx = `
+          <!-- Backwards Cap -->
+          <path d="M206 114 Q250 96 294 114 L288 126 Q250 110 212 126 Z" fill="#6366f1" />
+          <ellipse cx="250" cy="128" rx="44" ry="50" fill="#fed7aa" />
+          <!-- Bloodshot Stressed Eyes -->
+          <circle cx="235" cy="122" r="6" stroke="#ef4444" stroke-width="2" fill="#fff" />
+          <circle cx="265" cy="122" r="6" stroke="#ef4444" stroke-width="2" fill="#fff" />
+          <path d="M236 152 Q250 144 264 152" stroke="#09090b" stroke-width="3" fill="none" />
+          <path d="M195 210 C195 174, 305 174, 305 210 Z" fill="#1e1b4b" />
+        `;
+      } else {
+        // Sigma Phonk
+        characterGfx = `
+          <!-- Black Hoodie & Glowing Shades -->
+          <path d="M195 210 C195 140, 305 140, 305 210 Z" fill="#020617" />
+          <ellipse cx="250" cy="125" rx="42" ry="46" fill="#090d16" />
+          <!-- Neon Glowing Shades -->
+          <rect x="220" y="118" width="26" height="14" rx="3" fill="#a855f7" />
+          <rect x="254" y="118" width="26" height="14" rx="3" fill="#a855f7" />
+          <line x1="244" y1="124" x2="256" y2="124" stroke="#a855f7" stroke-width="3" />
+        `;
+      }
+
+      const svgString = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" width="100%" height="100%">
+          <defs>
+            <radialGradient id="vignette_${type}" cx="50%" cy="40%" r="65%">
+              <stop offset="0%" stop-color="#3a1c0d" />
+              <stop offset="70%" stop-color="#140904" />
+              <stop offset="100%" stop-color="#050201" />
+            </radialGradient>
+          </defs>
+          <rect width="500" height="300" fill="url(#vignette_${type})" />
+          
+          <!-- Character Graphic Elements -->
+          ${characterGfx}
+
+          <!-- Centered Punchline Text -->
+          <text x="250" y="248" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="16.5" fill="#f97316" text-anchor="middle" letter-spacing="1.2">
+            ${quoteText.toUpperCase()}
+          </text>
+
+          <!-- Centered Movie / Culture Credit -->
+          <text x="250" y="274" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="11" fill="#fdba74" opacity="0.9" text-anchor="middle" letter-spacing="1.5">
+            ${subtitleText.toUpperCase()}
+          </text>
+        </svg>
+      `;
+
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svgString);
     }
 
     const TEN_LOADED_MEMES = [
       {
+        title: "Vasooli Bhai — Panvel Express",
+        tag: "Golmaal Cult Meme",
+        poster: makeCharacterVectorPoster("vasooli", "Jaldi Kar Suboh Panvel Nikalna Hai!", "Golmaal (2006) — Vasooli Bhai"),
+        dialogue: "\"Vasooli Bhai: 'Jaldi set kar kal subah Panvel nikalna hai! 20 minute se bench pe baith ke reels dekh raha hai!'\"",
+        roast: "Logs 1 warm-up set, takes 14 mirror selfies with flash, and disappears to the juice stall. Official mascot of the Cooked Squad.",
+        credit: "Golmaal: Fun Unlimited (2006) · Mukesh Tiwari as Vasooli Bhai"
+      },
+      {
         title: "Babu Bhaiya — Hera Pheri",
         tag: "Bollywood Cult Legend",
-        imgUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Paresh_Rawal_at_the_special_screening_of_%E2%80%98Sanju%E2%80%99.jpg/640px-Paresh_Rawal_at_the_special_screening_of_%E2%80%98Sanju%E2%80%99.jpg",
-        fallback: createFallbackDataUrl("BABU BHAIYA (HERA PHERI)", "Utha Le Re Baba... Isko Gym Se Utha Le!", "#f59e0b"),
+        poster: makeCharacterVectorPoster("babu", "Utha Le Re Baba... Gym Se Utha Le!", "Hera Pheri (2000) — Baburao"),
         dialogue: "\"Babu Bhaiya: 'Utha le re baba... isko gym se utha le! 4 ghante reels dekh raha hai, dumbbell pe dhool jam gayi!'\"",
         roast: "Ate 400 calories all day and wondered why muscle isn't generating through quantum physics. Arms looking like two strands of uncooked Maggi noodles.",
         credit: "Hera Pheri (2000) · Paresh Rawal as Baburao"
@@ -803,26 +1052,15 @@
       {
         title: "Brahmanandam — The Ultimate Shock",
         tag: "South Indian Film Heritage",
-        imgUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Brahmanandam.jpg/640px-Brahmanandam.jpg",
-        fallback: createFallbackDataUrl("BRAHMANANDAM FACEPALM", "Rey! Entha Pani Chesav Ra!", "#f43f5e"),
+        poster: makeCharacterVectorPoster("brahmi", "Rey! Entha Pani Chesav Ra!", "Tollywood Legend — Brahmanandam"),
         dialogue: "\"Brahmanandam: 'Rey! Entha pani chesav ra! Intha screen time pettukuni em peekudham ani!'\"",
         roast: "Doomscrolled past the 4-hour strict cap straight into severe muscle atrophy. Left quad and right quad currently filing for divorce over zero squat volume.",
         credit: "Padmashri Brahmanandam Reaction Face Heritage"
       },
       {
-        title: "Vasooli Bhai — Panvel Express",
-        tag: "Golmaal Cult Meme",
-        imgUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Mukesh_Tiwari_at_special_screening_of_Total_Dhamaal.jpg/640px-Mukesh_Tiwari_at_special_screening_of_Total_Dhamaal.jpg",
-        fallback: createFallbackDataUrl("VASOOLI BHAI (GOLMAAL)", "Jaldi Set Khatam Kar... Kal Panvel Nikalna Hai!", "#ea580c"),
-        dialogue: "\"Vasooli Bhai: 'Jaldi set khatam kar kal subah Panvel nikalna hai! 20 minute se bench pe baith ke chat kar raha hai!'\"",
-        roast: "Logs 1 warm-up set, takes 14 mirror selfies with flash, and disappears to the juice stall. Official mascot of the Cooked Squad.",
-        credit: "Golmaal (2006) · Mukesh Tiwari as Vasooli Bhai"
-      },
-      {
         title: "Ramadhir Singh — Reality Check",
         tag: "Gangs of Wasseypur",
-        imgUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Tigmanshu_Dhulia_at_the_special_screening_of_Paan_Singh_Tomar.jpg/640px-Tigmanshu_Dhulia_at_the_special_screening_of_Paan_Singh_Tomar.jpg",
-        fallback: createFallbackDataUrl("RAMADHIR SINGH (GOW)", "Beta... Tumse Na Ho Payega!", "#a855f7"),
+        poster: makeCharacterVectorPoster("ramadhir", "Beta... Tumse Na Ho Payega!", "Gangs of Wasseypur — Ramadhir"),
         dialogue: "\"Ramadhir Singh: 'Beta... tumse na ho payega! Tumhare lakshan bilkul theek nahi lag rahe!'\"",
         roast: "Ate 1 biscuit and 1 cup chai, then claimed a 'clean cut'. Skipped squat day for the 5th week in a row. Movie side goons would blow him away.",
         credit: "Gangs of Wasseypur (2012) · Tigmanshu Dhulia"
@@ -830,26 +1068,23 @@
       {
         title: "Majnu Bhai — Hypertrophy X-Ray",
         tag: "Welcome Cult Comedy",
-        imgUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Anil_Kapoor_promoting_Jugjugg_Jeeyo.jpg/640px-Anil_Kapoor_promoting_Jugjugg_Jeeyo.jpg",
-        fallback: createFallbackDataUrl("MAJNU BHAI (WELCOME)", "Ye Meri Painting Nahi, Tumhari Squat Form Ka X-Ray Hai!", "#10b981"),
+        poster: makeCharacterVectorPoster("majnu", "Ye Squat Form Ka X-Ray Hai!", "Welcome (2007) — Majnu Bhai"),
         dialogue: "\"Majnu Bhai: 'Ye meri painting nahi, tumhari squat form ka MRI scan hai!'\"",
         roast: "Deadlift form so crooked and rounded that nearby orthopedic surgeons are handing out visiting cards. Hits 15 grams of protein and expects arms to expand.",
         credit: "Welcome (2007) · Anil Kapoor as Majnu Bhai"
       },
       {
-        title: "X Trending: GigaChad vs Doomscroller",
+        title: "GigaChad vs Doomscroller",
         tag: "X / Twitter Viral Trend",
-        imgUrl: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=700&auto=format&fit=crop&q=80",
-        fallback: createFallbackDataUrl("GIGACHAD VS DOOMSCROLLER", "Zero Screen Time vs 8 Hours Reels Addiction", "#06b6d4"),
+        poster: makeCharacterVectorPoster("gigachad", "Zero Screen Time · 100% Locked In", "GigaChad — Peak Discipline"),
         dialogue: "\"Yes, I hit 140g protein, locked in 4 sets to failure, and kept phone under 4 hours. How could you tell?\"",
         roast: "Bro rests 12 minutes between 2.5kg dumbbell curls to check who liked his tweet. Shaker cup has developed its own prehistoric civilization.",
         credit: "X Viral Gym Bro & GigaChad Culture"
       },
       {
-        title: "Insta Reels: NPC Gym Bro Spotted",
+        title: "Insta Reels: NPC Gym Bro",
         tag: "Instagram Trending",
-        imgUrl: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=700&auto=format&fit=crop&q=80",
-        fallback: createFallbackDataUrl("INSTA GYM NPC", "₹10,000 Drip... 0 Reps to Failure", "#ec4899"),
+        poster: makeCharacterVectorPoster("npc", "10k Drip... 0 Reps to Failure!", "Instagram Reels — The Gym NPC"),
         dialogue: "\"Pov: Bro bought ₹10,000 gym drip and pre-workout just to sit on the flat bench doomscrolling Instagram reels.\"",
         roast: "6.5 hours on screen today! More volume in finger thumb scrolling than in total squat tonnage. Certified clown trophy owner.",
         credit: "Instagram Reels Gym NPC Stereotype"
@@ -857,8 +1092,7 @@
       {
         title: "Guddu Pandit — 140g Revenge",
         tag: "Mirzapur Viral",
-        imgUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Ali_Fazal_promoting_Victoria_%26_Abdul.jpg/640px-Ali_Fazal_promoting_Victoria_%26_Abdul.jpg",
-        fallback: createFallbackDataUrl("GUDDU PANDIT (MIRZAPUR)", "Ab Badla Bhi Lena Hai Aur 140g Protein Bhi!", "#ef4444"),
+        poster: makeCharacterVectorPoster("guddu", "Badla Bhi Aur 140g Protein Bhi!", "Mirzapur — Guddu Pandit"),
         dialogue: "\"Guddu Bhaiya: 'Aap jis gym mein cardio karte hain, wahan ke hum bench press hain! 140g protein poora karo!'\"",
         roast: "Entered gym at 7 PM, took 18 flash mirror selfies, touched one treadmill for 40 seconds, drank half a sip of water, and left.",
         credit: "Mirzapur Series · Ali Fazal as Guddu"
@@ -866,8 +1100,7 @@
       {
         title: "X Finance / Crypto Bro Delusion",
         tag: "X / Web3 Meme",
-        imgUrl: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=700&auto=format&fit=crop&q=80",
-        fallback: createFallbackDataUrl("CRYPTO BRO REALITY", "Portfolio Down 80% · Screen Time Up 400%", "#8b5cf6"),
+        poster: makeCharacterVectorPoster("crypto", "Portfolio Down 80% · Squat at 2 Inches", "X Crypto Bro — Reels Addict"),
         dialogue: "\"Checking his shitcoin portfolio mid-deadlift set and dropped the barbell straight on his toe.\"",
         roast: "Portfolio down 80%, screen time up 400%, squat depth at 2 inches. Gives unsolicited macro advice in WhatsApp groups.",
         credit: "X Crypto & Finance Failure Meme"
@@ -875,8 +1108,7 @@
       {
         title: "Phonk Sigma Delusion Bro",
         tag: "TikTok / Shorts Viral",
-        imgUrl: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=700&auto=format&fit=crop&q=80",
-        fallback: createFallbackDataUrl("SIGMA PHONK DELUSION", "Sunglasses in Dim Basement Gym", "#14b8a6"),
+        poster: makeCharacterVectorPoster("sigma", "Swinging 2.5kg With Full Body Swing", "TikTok Sigma — Cringe to Failure"),
         dialogue: "\"Listening to slow-reverb phonk music while doing 2.5kg lateral raises with full body momentum swing.\"",
         roast: "Wears dark sunglasses inside a dark gym. Zero sets to failure, 100% cringe to failure. Needs an intervention.",
         credit: "Sigma Grindset Parody Meme"
@@ -884,7 +1116,7 @@
     ];
 
     /* ==========================================================================
-       2. 4-HOUR MEME CYCLE ENGINE
+       2. 4-HOUR ROTATION ENGINE
        ========================================================================== */
     const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
     let manualMemeOffset = 0;
@@ -910,12 +1142,9 @@
     function applyRoastDisplay() {
       const meme = TEN_LOADED_MEMES[getFourHourCycleMemeIndex()];
       const imgEl = document.getElementById("shameMemeImg");
-      
       if (imgEl) {
-        imgEl.src = meme.imgUrl;
+        imgEl.src = meme.poster;
       }
-      
-      document.getElementById("shameMemeTitle").textContent = `${meme.tag} · ${meme.title}`;
       document.getElementById("shameDialogue").textContent = meme.dialogue;
       document.getElementById("shameRoastText").textContent = meme.roast;
       document.getElementById("shameMemeCredit").textContent = meme.credit;
@@ -925,7 +1154,7 @@
     function handleMemeNetworkFallback(imgEl) {
       imgEl.onerror = null;
       const meme = TEN_LOADED_MEMES[getFourHourCycleMemeIndex()];
-      imgEl.src = meme.fallback;
+      imgEl.src = meme.poster;
     }
 
     function manualShuffleRoast() {
@@ -934,7 +1163,101 @@
     }
 
     /* ==========================================================================
-       3. WORKOUT & FOOD DATA
+       3. ONBOARDING CONTROLLER
+       ========================================================================== */
+    let tempDietSelection = "non-veg";
+    let tempGymDaysSelection = 4;
+
+    function selectObDiet(type) {
+      tempDietSelection = type;
+      const btnVeg = document.getElementById("dietBtnVeg");
+      const btnNonVeg = document.getElementById("dietBtnNonVeg");
+
+      if (type === "veg") {
+        btnVeg.className = "p-3 bg-emerald-950/40 border border-emerald-500 rounded-2xl flex flex-col items-center justify-center text-center transition";
+        btnNonVeg.className = "p-3 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center transition hover:border-slate-700";
+      } else {
+        btnNonVeg.className = "p-3 bg-emerald-950/40 border border-emerald-500 rounded-2xl flex flex-col items-center justify-center text-center transition";
+        btnVeg.className = "p-3 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center transition hover:border-slate-700";
+      }
+    }
+
+    function selectObGymDays(days) {
+      tempGymDaysSelection = Math.min(5, Math.max(1, days));
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`daysBtn${i}`);
+        if (i === tempGymDaysSelection) {
+          btn.className = "py-2.5 bg-emerald-500 text-slate-950 border border-emerald-400 rounded-xl font-bold transition";
+        } else {
+          btn.className = "py-2.5 bg-slate-950 text-slate-300 border border-slate-800 rounded-xl font-bold transition";
+        }
+      }
+    }
+
+    function goToOnboardStep(step) {
+      const s1 = document.getElementById("onboardStep1");
+      const s2 = document.getElementById("onboardStep2");
+      const label = document.getElementById("onboardStepLabel");
+      const dot1 = document.getElementById("stepDot1");
+      const dot2 = document.getElementById("stepDot2");
+
+      if (step === 2) {
+        const nameVal = document.getElementById("obName").value.trim();
+        if (!nameVal) {
+          alert("Please enter your name or call-sign to continue!");
+          return;
+        }
+        s1.classList.add("hidden");
+        s2.classList.remove("hidden");
+        label.textContent = "Step 2 of 2: Diet & Target Goal";
+        dot1.className = "w-2 h-1.5 rounded-full bg-slate-700 transition-all duration-300";
+        dot2.className = "w-6 h-1.5 rounded-full bg-emerald-400 transition-all duration-300";
+      } else {
+        s2.classList.add("hidden");
+        s1.classList.remove("hidden");
+        label.textContent = "Step 1 of 2: Physical Metrics";
+        dot1.className = "w-6 h-1.5 rounded-full bg-emerald-400 transition-all duration-300";
+        dot2.className = "w-2 h-1.5 rounded-full bg-slate-700 transition-all duration-300";
+      }
+    }
+
+    function finalizeOnboarding() {
+      const name = document.getElementById("obName").value.trim() || "Masood";
+      const age = parseInt(document.getElementById("obAge").value) || 22;
+      const height = parseInt(document.getElementById("obHeight").value) || 175;
+      const startWeight = parseFloat(document.getElementById("obStartWeight").value) || 60.0;
+      const targetWeight = parseFloat(document.getElementById("obTargetWeight").value) || 68.0;
+
+      appState.profile = {
+        name,
+        age,
+        height,
+        startWeight,
+        targetWeight,
+        diet: tempDietSelection,
+        gymDays: tempGymDaysSelection
+      };
+
+      const host = appState.users[0];
+      host.name = name;
+      host.currentWeight = startWeight;
+      host.targetWeight = targetWeight;
+      host.diet = tempDietSelection;
+      host.gymDays = tempGymDaysSelection;
+
+      appState.onboarded = true;
+      localStorage.setItem("irontrack_onboarded_flag", "true");
+      saveState();
+
+      const ob = document.getElementById("onboardingScreen");
+      ob.style.opacity = "0";
+      setTimeout(() => ob.classList.add("hidden"), 400);
+
+      updateUI();
+    }
+
+    /* ==========================================================================
+       4. INITIAL STATE & GROUP MANAGEMENT
        ========================================================================== */
     const PRESET_FOODS = [
       { id: "egg_whole", name: "Whole Egg", serving: "1 egg", calories: 75, protein: 6, carbs: 0.5, fats: 5, fiber: 0 },
@@ -1016,11 +1339,7 @@
       }
     };
 
-    /* ==========================================================================
-       4. CLEAN SINGLE-USER INITIAL STATE & SQUAD GROUP MANAGEMENT
-       (Default mock buddies Aman, Kunal, Sameer removed)
-       ========================================================================== */
-    const STORAGE_KEY = "irontrack_squad_clean_v16_host";
+    const STORAGE_KEY = "irontrack_squad_clean_v20_final_fix";
     const HARDCODED_SCREEN_LIMIT = 4.0;
 
     function getTodayDateString() {
@@ -1031,19 +1350,23 @@
       return `${y}-${m}-${d}`;
     }
 
-    // Default Host User only
     const DEFAULT_HOST_USER = {
       id: "u_host",
       name: "Masood",
       avatarTitle: "Host (GigaChad)",
       avatarEmoji: "🦁",
       currentWeight: 60.0,
+      targetWeight: 68.0,
+      diet: "non-veg",
+      gymDays: 4,
       isHost: true,
       trackShare: true,
       logs: {}
     };
 
     let appState = {
+      onboarded: false,
+      profile: null,
       group: {
         id: "squad_" + Math.random().toString(36).substring(2, 8),
         name: "Iron Brotherhood"
@@ -1076,11 +1399,21 @@
       }
       appState.selectedDate = getTodayDateString();
 
-      // Check if user is joining via shared URL link
-      checkUrlJoinParams();
+      if (localStorage.getItem("irontrack_onboarded_flag") === "true") {
+        appState.onboarded = true;
+      }
 
+      checkUrlJoinParams();
       initCleanTodayLog();
       initCloudFirebase();
+
+      const ob = document.getElementById("onboardingScreen");
+      if (!appState.onboarded) {
+        ob.classList.remove("hidden");
+        ob.style.opacity = "1";
+      } else {
+        ob.classList.add("hidden");
+      }
     }
 
     function saveState() {
@@ -1159,9 +1492,8 @@
         appState.group.id = joinGroup;
         if (groupName) appState.group.name = decodeURIComponent(groupName);
 
-        // Prompt new buddy to enter their identity
         setTimeout(() => {
-          const friendName = prompt(`You've been invited to join the gym squad "${appState.group.name}"! Enter your name:`);
+          const friendName = prompt(`You've been invited to join "${appState.group.name}"! Enter your name:`);
           if (friendName && friendName.trim()) {
             const newId = "u_" + Date.now();
             appState.users.push({
@@ -1170,6 +1502,7 @@
               avatarTitle: "Squad Trainee",
               avatarEmoji: "⚡",
               currentWeight: 65.0,
+              targetWeight: 70.0,
               trackShare: true,
               logs: {}
             });
@@ -1177,7 +1510,6 @@
             saveState();
             alert(`Welcome to ${appState.group.name}, ${friendName}!`);
           }
-          // Clear query params from address bar
           window.history.replaceState({}, document.title, window.location.pathname);
         }, 1200);
       }
@@ -1189,14 +1521,12 @@
       document.getElementById("shareModal").classList.remove("hidden");
     }
 
-    function closeShareModal() {
-      document.getElementById("shareModal").classList.add("hidden");
-    }
+    function closeShareModal() { document.getElementById("shareModal").classList.add("hidden"); }
 
     function copyShareInviteLink() {
       const link = getShareableGroupLink();
       navigator.clipboard.writeText(link).then(() => {
-        alert("Invite link copied to clipboard! Send it to your gym buddy.");
+        alert("Invite link copied to clipboard! Share it with your gym buddy.");
       });
     }
 
@@ -1213,9 +1543,7 @@
       document.getElementById("renameGroupInput").value = appState.group.name;
       document.getElementById("renameGroupModal").classList.remove("hidden");
     }
-    function closeRenameGroupModal() {
-      document.getElementById("renameGroupModal").classList.add("hidden");
-    }
+    function closeRenameGroupModal() { document.getElementById("renameGroupModal").classList.add("hidden"); }
     function saveGroupName() {
       const name = document.getElementById("renameGroupInput").value.trim();
       if (name) {
@@ -1243,6 +1571,7 @@
         avatarTitle: "Gym Buddy",
         avatarEmoji: "🦍",
         currentWeight: weight,
+        targetWeight: weight + 5,
         trackShare: true,
         logs: {}
       });
@@ -1414,15 +1743,17 @@
     }
 
     /* ==========================================================================
-       9. LEADERBOARD RENDERING WITH HOST REMOVE BUTTONS
+       9. LEADERBOARD RENDERING
        ========================================================================== */
     function renderLeaderboardAndRoast() {
       const container = document.getElementById("leaderboardContainer");
       if (!container) return;
       container.innerHTML = "";
 
-      document.getElementById("leaderboardGroupTitle").textContent = appState.group.name;
-      document.getElementById("groupBadgeName").textContent = appState.group.name;
+      const grpEl = document.getElementById("leaderboardGroupTitle");
+      if (grpEl) grpEl.textContent = appState.group.name;
+      const grpBadge = document.getElementById("groupBadgeName");
+      if (grpBadge) grpBadge.textContent = appState.group.name;
 
       const today = new Date(appState.selectedDate);
       const userScores = appState.users.map(u => {
@@ -1487,7 +1818,6 @@
               <span class="text-[10px] text-slate-500">${item.avg} avg/d</span>
             </div>
 
-            <!-- Host Kick / Remove Button (Never remove Host) -->
             ${!isHost ? `
               <button onclick="kickUser('${item.user.id}', '${item.user.name}')" title="Kick member" class="p-1 px-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 rounded-lg text-rose-400 text-xs font-bold transition active:scale-95">
                 ✕
@@ -1498,7 +1828,6 @@
         container.appendChild(card);
       });
 
-      // Update Hall of Shame
       if (userScores.length > 1) {
         const lastPlace = userScores[userScores.length - 1];
         const firstPlace = userScores[0];
@@ -1757,7 +2086,7 @@
     }
 
     /* ==========================================================================
-       11. WORKOUT LOGIC (SYMMETRICAL DUAL-DROPDOWN FIX)
+       11. WORKOUT LOGIC
        ========================================================================== */
     function renderDaySelect() {
       const daySelect = document.getElementById("daySelect");
@@ -1892,7 +2221,7 @@
 
       const configMap = {
         aura: { label: "Net Aura Points", color: "#a855f7", unit: "pts", target: 10 },
-        weight: { label: "Morning Weight", color: "#10b981", unit: "kg", target: 68 },
+        weight: { label: "Morning Weight", color: "#10b981", unit: "kg", target: user.targetWeight || 68 },
         calories: { label: "Calories", color: "#34d399", unit: "kcal", target: 3000 },
         screentime: { label: "Screen Time", color: "#f43f5e", unit: "hrs", target: HARDCODED_SCREEN_LIMIT },
         steps: { label: "Daily Steps", color: "#38bdf8", unit: "steps", target: 8000 }
@@ -2033,10 +2362,16 @@
         select.appendChild(opt);
       });
 
-      document.getElementById("hubAvatarEmojiDisplay").textContent = user.avatarEmoji || "🦁";
-      document.getElementById("hubAvatarNameDisplay").textContent = user.name;
-      document.getElementById("hubAvatarTitleDisplay").textContent = user.avatarTitle || "GigaChad";
-      document.getElementById("hubUserWeightDisplay").textContent = (user.currentWeight || 60.0) + " kg";
+      const emojiDisplay = document.getElementById("hubAvatarEmojiDisplay");
+      if (emojiDisplay) emojiDisplay.textContent = user.avatarEmoji || "🦁";
+      const nameDisplay = document.getElementById("hubAvatarNameDisplay");
+      if (nameDisplay) nameDisplay.textContent = user.name;
+      const titleDisplay = document.getElementById("hubAvatarTitleDisplay");
+      if (titleDisplay) titleDisplay.textContent = user.avatarTitle || "GigaChad";
+      const weightDisplay = document.getElementById("hubUserWeightDisplay");
+      if (weightDisplay) weightDisplay.textContent = (user.currentWeight || 60.0) + " kg";
+      const targetDisplay = document.getElementById("hubUserTargetDisplay");
+      if (targetDisplay) targetDisplay.textContent = (user.targetWeight || 68.0) + " kg";
 
       const score = calculateDayPoints(log);
       document.getElementById("auraPointsTotalDisplay").textContent = score.net.toFixed(1);
@@ -2134,7 +2469,7 @@
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `You are a savage Indian gym coach. Trainee: ${user.name} (${user.avatarTitle || 'Trainee'}). Group: ${appState.group.name}. Today: ${log.calories || 0} kcal, ${log.protein || 0}g protein, ${log.screenTime || 0}h screen time (cap: 4.0h). Roast if screen time > 4h or give hypertrophy advice: "${question}"`
+                  text: `You are a savage Indian gym coach. Trainee: ${user.name} (${user.avatarTitle || 'Trainee'}). Group: ${appState.group.name}. Diet: ${user.diet || 'non-veg'}. Today: ${log.calories || 0} kcal, ${log.protein || 0}g protein, ${log.screenTime || 0}h screen time (cap: 4.0h). Roast if screen time > 4h or give hypertrophy advice: "${question}"`
                 }]
               }]
             })
@@ -2154,7 +2489,9 @@
         if (q.includes("roast") || q.includes("sameer") || q.includes("bro")) {
           reply = "💀 **Coach Roast:** Tell that buddy to put down the phone! 6 hours on reels and zero sets to failure? Shaker cup has formed a new fungal kingdom!";
         } else if (q.includes("protein") || q.includes("cheap")) {
-          reply = "🍗 **Indian Protein Stack:** 50g Nutrela soya chunks (26g protein, ₹7) + 3 whole boiled eggs (18g protein, ₹21). 44g pure protein under ₹30!";
+          reply = user.diet === "veg"
+            ? "🥗 **Vegetarian Protein Stack:** 50g Nutrela soya chunks (26g protein, ₹7) + 250ml double-toned milk (8g) + 30g roasted peanuts (8g). Over 42g pure plant protein under ₹25!"
+            : "🍗 **Non-Veg Protein Stack:** 50g Nutrela soya chunks (26g protein, ₹7) + 3 whole boiled eggs (18g protein, ₹21). 44g pure protein under ₹30!";
         } else {
           reply = `💪 **Coach Insight:** You're sitting at ${calculateDayPoints(log).net} Aura Points today. Eat 3,000 kcal and keep screen time below 4 hours!`;
         }
@@ -2179,7 +2516,7 @@
     }
 
     /* ==========================================================================
-       14. BOOT & SPLASH SCREEN TIMEOUT
+       14. BOOT & INITIALIZATION
        ========================================================================== */
     const dInput = document.getElementById("activeDateInput");
     dInput.max = getTodayDateString();
@@ -2191,21 +2528,24 @@
     });
 
     window.addEventListener("DOMContentLoaded", () => {
-      loadState();
-      dInput.max = getTodayDateString();
-      dInput.value = appState.selectedDate;
-      renderDaySelect();
-      recalculateDietTotals();
-      updateUI();
-
-      // Smooth Splash Screen Dismissal
-      setTimeout(() => {
-        const splash = document.getElementById("appSplashScreen");
-        if (splash) {
-          splash.style.opacity = "0";
-          setTimeout(() => splash.remove(), 700);
-        }
-      }, 950);
+      try {
+        loadState();
+        dInput.max = getTodayDateString();
+        dInput.value = appState.selectedDate;
+        renderDaySelect();
+        recalculateDietTotals();
+        updateUI();
+      } catch (err) {
+        console.error("Initialization Error:", err);
+      } finally {
+        setTimeout(() => {
+          const splash = document.getElementById("appSplashScreen");
+          if (splash) {
+            splash.style.opacity = "0";
+            setTimeout(() => splash.remove(), 700);
+          }
+        }, 800);
+      }
     });
   </script>
 </body>
