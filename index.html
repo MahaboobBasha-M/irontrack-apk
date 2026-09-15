@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>IronTrack Pro — Squad Aura & Gains Suite</title>
+  
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <meta name="theme-color" content="#020617" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="IronTrack" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              emerald: '#10b981',
+              neon: '#a855f7',
+              cyan: '#06b6d4',
+              flame: '#f43f5e'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    /* Read-Only State for Past Dates */
+    .locked-past-mode input:not(#activeDateInput),
+    .locked-past-mode select:not(#userSelect):not(#chartMetricSelect):not(#phaseSelect):not(#daySelect),
+    .locked-past-mode button:not([data-allow-locked]):not([onclick^="switchTab"]):not([onclick^="switchUser"]):not([onclick^="goToToday"]) {
+      opacity: 0.5;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased pb-24 md:pb-8">
+
+  <!-- TOP RESPONSIVE APP BAR -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-2.5 shadow-md">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-2">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-purple-500 to-cyan-400 flex items-center justify-center text-slate-950 font-black text-lg shadow-lg shadow-purple-500/20">
+          ⚡
+        </div>
+        <div>
+          <h1 class="text-sm md:text-base font-black tracking-tight text-white flex items-center gap-1.5">
+            IronTrack <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">AURA SQUAD</span>
+          </h1>
+          <p class="text-[10px] text-slate-400 font-mono hidden sm:block">Target: +10 Aura Pts · 3,000 kcal · 4h Screen Cap · Zero Excuses</p>
+        </div>
+      </div>
+
+      <!-- Desktop Nav Links -->
+      <div class="hidden md:flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 text-xs font-semibold">
+        <button onclick="switchTab('hub')" id="dnav-hub" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-slate-950 font-bold transition">Hub</button>
+        <button onclick="switchTab('diet')" id="dnav-diet" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">Diet</button>
+        <button onclick="switchTab('workout')" id="dnav-workout" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">Workout</button>
+        <button onclick="switchTab('leaderboard')" id="dnav-leaderboard" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">Squad & Shame 🏆</button>
+        <button onclick="switchTab('charts')" id="dnav-charts" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">Charts 📈</button>
+      </div>
+
+      <!-- User, Avatar Customizer & Date Selectors -->
+      <div class="flex items-center gap-1.5">
+        <input type="date" id="activeDateInput" class="bg-slate-800 border border-slate-700 text-[11px] rounded-lg px-2 py-1 text-slate-200 focus:outline-none font-mono" />
+        
+        <select id="userSelect" onchange="switchUser(this.value)" class="bg-slate-800 border border-slate-700 text-[11px] rounded-lg px-2 py-1 text-emerald-400 font-bold focus:outline-none max-w-[140px] truncate">
+          <!-- JS Generated -->
+        </select>
+
+        <button onclick="openAvatarModal()" data-allow-locked="true" title="Customize Avatar Name & Style" class="p-1.5 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-800/50 rounded-lg text-purple-300 text-xs font-bold transition">
+          🎨 Avatar
+        </button>
+
+        <button onclick="promptAppInstall()" id="installPwaBtn" data-allow-locked="true" class="hidden sm:flex items-center gap-1 text-[11px] px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-lg font-bold hover:bg-emerald-500/30">
+          📲 App
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAST DATE LOCKED WARNING BANNER -->
+  <div id="pastDateLockedBanner" class="hidden bg-amber-950/90 border-b border-amber-800/80 px-4 py-2 text-center text-xs text-amber-200 font-mono flex items-center justify-center gap-3">
+    <span>🔒 <strong>Past Date Locked:</strong> Historical records cannot be modified.</span>
+    <button onclick="goToToday()" data-allow-locked="true" class="px-2.5 py-0.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-[10px] transition">
+      Back to Today
+    </button>
+  </div>
+
+  <!-- REST TIMER POPUP -->
+  <div id="timerBar" class="hidden fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-emerald-500 text-slate-950 font-black px-5 py-1.5 rounded-full shadow-2xl flex items-center gap-3 text-xs animate-bounce">
+    <span>⏱️ REST: <span id="timerTime">01:30</span></span>
+    <button onclick="cancelTimer()" class="bg-slate-950 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">✕</button>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="mainAppContent" class="max-w-6xl mx-auto px-3.5 pt-4">
+
+    <!-- ============================================================== -->
+    <!-- TAB 1: HUB (AURA DASHBOARD, 4H FIXED SCREEN TIME, STATS) -->
+    <!-- ============================================================== -->
+    <div id="tab-hub" class="tab-pane active space-y-4">
+
+      <!-- USER AVATAR BADGE CARD -->
+      <section class="bg-gradient-to-r from-purple-950/30 via-slate-900 to-slate-900 border border-purple-800/30 rounded-2xl p-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div id="hubAvatarEmojiDisplay" class="w-12 h-12 rounded-2xl bg-purple-900/40 border border-purple-700/50 flex items-center justify-center text-2xl shadow-md">
+            🦁
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span id="hubAvatarNameDisplay" class="font-extrabold text-sm md:text-base text-white">Masood</span>
+              <span id="hubAvatarTitleDisplay" class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">GigaChad</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-mono">Current Weight: <span id="hubUserWeightDisplay" class="text-emerald-400 font-bold">60.0 kg</span> · Goal: 68 kg</p>
+          </div>
+        </div>
+        <button onclick="openAvatarModal()" data-allow-locked="true" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-purple-300 font-bold transition">
+          Edit Avatar ✏️
+        </button>
+      </section>
+
+      <!-- AURA POINTS SCORECARD -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daily Aura Score</span>
+            <div class="flex items-baseline gap-2 mt-0.5">
+              <span id="auraPointsTotalDisplay" class="text-3xl font-black text-emerald-400 font-mono">0.0</span>
+              <span class="text-xs text-slate-400 font-medium">/ 10.0 Max Pts</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span id="auraRankBadge" class="text-xs font-black px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/60 uppercase">
+              NPC Status
+            </span>
+            <div id="auraFormulaSnippet" class="text-[10px] text-slate-400 font-mono mt-1">+0 Base · -0 Doomscroll</div>
+          </div>
+        </div>
+
+        <!-- Task Completion Pill Matrix -->
+        <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5 text-center pt-2 border-t border-slate-800/80">
+          <div id="pillWorkout" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+            <div class="text-slate-500">Lift (2.5)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillWorkout">0</div>
+          </div>
+          <div id="pillCal" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+            <div class="text-slate-500">Kcal (2.0)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillCal">0</div>
+          </div>
+          <div id="pillProtein" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+            <div class="text-slate-500">Prot (1.5)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillProtein">0</div>
+          </div>
+          <div id="pillSteps" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+            <div class="text-slate-500">Steps (1.5)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillSteps">0</div>
+          </div>
+          <div id="pillWater" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+            <div class="text-slate-500">Water (1.0)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillWater">0</div>
+          </div>
+          <div id="pillFiber" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px]">
+            <div class="text-slate-500">Fiber (0.75)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillFiber">0</div>
+          </div>
+          <div id="pillWeight" class="p-2 rounded-xl bg-slate-950/60 border border-slate-800 text-[10px] col-span-2 sm:col-span-1">
+            <div class="text-slate-500">Weight (0.75)</div>
+            <div class="font-bold text-slate-400 mt-0.5" id="valPillWeight">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN TIME WITH STRICT 4-HOUR CAP -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">📱</span>
+            <div>
+              <h2 class="text-xs font-bold text-white uppercase tracking-wider">SCREEN TIME & DOOMSCROLL TAX</h2>
+              <p class="text-[10px] text-slate-400">Strict 4-Hour Limit. Exceeding deducts -1.5 Aura Points per hour.</p>
+            </div>
+          </div>
+          <span id="screenTimePenaltyBadge" class="text-xs font-bold font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
+            0 Pt Penalty (Clean)
+          </span>
+        </div>
+
+        <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-2.5">
+          <div class="flex justify-between items-center text-[11px]">
+            <span class="text-slate-400 font-medium">Logged Screen Time (Slide to Log)</span>
+            <span id="screenTimeValDisplay" class="font-black font-mono text-cyan-400 text-sm">0h 00m</span>
+          </div>
+          <input type="range" id="screenTimeSlider" min="0" max="12" step="0.25" value="0" oninput="updateScreenTimeFromSlider(this.value)" class="w-full accent-cyan-400 h-2 bg-slate-800 rounded-lg cursor-pointer" />
+          <div class="flex justify-between text-[10px] text-slate-500 font-mono font-bold">
+            <span>0h (Monk)</span>
+            <span class="text-emerald-400">4h (Strict Cap)</span>
+            <span>8h</span>
+            <span class="text-rose-400">12h (Cooked)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- MORNING WEIGHT & STEPS -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Morning Weight</span>
+            <div class="flex items-center gap-1.5 mt-1">
+              <input type="number" id="hubWeightInput" step="0.1" placeholder="60.0" class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold font-mono focus:outline-none" />
+              <span class="text-xs text-slate-400">kg</span>
+              <button onclick="saveMorningWeightFromHub()" class="px-2.5 py-1 bg-emerald-600 text-slate-950 font-bold rounded-lg text-xs">Save</button>
+            </div>
+          </div>
+          <span class="text-2xl">⚖️</span>
+        </div>
+
+        <div class="p-3.5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Daily Steps</span>
+            <div class="flex items-center gap-1.5 mt-1">
+              <input type="number" id="hubStepsInput" placeholder="8500" class="w-24 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-bold font-mono focus:outline-none" />
+              <button onclick="saveStepsFromHub()" class="px-2.5 py-1 bg-blue-600 text-white font-bold rounded-lg text-xs">Save</button>
+              <button onclick="addQuickSteps(1000)" class="px-2 py-1 bg-slate-800 border border-slate-700 text-blue-300 rounded text-xs">+1k</button>
+            </div>
+          </div>
+          <span class="text-2xl">👟</span>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 2: DIET & AUTO CALORIE COUNTER -->
+    <!-- ============================================================== -->
+    <div id="tab-diet" class="tab-pane space-y-4">
+
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">What I Ate Today</h2>
+            <div class="text-2xl font-black text-emerald-400 font-mono mt-0.5">
+              <span id="counterCaloriesTotal">0</span> <span class="text-xs font-normal text-slate-400">/ 3,000 kcal</span>
+            </div>
+          </div>
+          <button onclick="openCustomFoodModal()" class="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-xl transition shadow-md shadow-emerald-600/20">
+            + Custom Food
+          </button>
+        </div>
+
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="calorieProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full w-0 transition-all duration-300"></div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] font-mono">
+          <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+            <span class="text-slate-400">Protein</span>
+            <div class="font-bold text-emerald-400 mt-0.5" id="counterProteinTotal">0g / 140g</div>
+          </div>
+          <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+            <span class="text-slate-400">Carbs</span>
+            <div class="font-bold text-cyan-400 mt-0.5" id="counterCarbsTotal">0g / 400g</div>
+          </div>
+          <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+            <span class="text-slate-400">Fats</span>
+            <div class="font-bold text-amber-400 mt-0.5" id="counterFatsTotal">0g / 75g</div>
+          </div>
+          <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+            <span class="text-slate-400">Fiber</span>
+            <div class="font-bold text-teal-400 mt-0.5" id="counterFiberTotal">0g</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">1-Tap Fast Logging (Plan Staples)</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="quickAddGrid"></div>
+      </section>
+
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <span class="font-bold text-white uppercase tracking-wider">Logged Meals Diary</span>
+          <span class="text-slate-500 text-[11px]" id="diaryItemsCount">0 items</span>
+        </div>
+        <div id="foodDiaryList" class="space-y-1.5 pt-1"></div>
+      </section>
+
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">🌱 Seeds & Fiber Checklist</span>
+          <span id="fiberStatusTag" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">0/5 Done</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="fiberSeedsContainer"></div>
+      </section>
+
+      <section class="p-3.5 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">💧</span>
+          <div>
+            <div class="text-xs font-bold text-white">Hydration (Goal: 4L)</div>
+            <div class="text-[11px] text-cyan-400 font-mono font-bold" id="waterDisplay">0.0 L</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="adjustWater(-0.25)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-bold">-0.25</button>
+          <button onclick="adjustWater(0.25)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-xs font-bold">+0.25</button>
+          <button onclick="adjustWater(0.5)" class="px-2.5 py-1 bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded text-xs font-bold">+0.5L</button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 3: WORKOUT TRACKER & FORM CUES -->
+    <!-- ============================================================== -->
+    <div id="tab-workout" class="tab-pane space-y-4">
+
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <select id="phaseSelect" onchange="renderExercises()" class="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-emerald-400 font-bold focus:outline-none">
+              <option value="p1">Phase 1: Foundation (M 1-2)</option>
+              <option value="p2">Phase 2: Growth (M 3-4)</option>
+              <option value="p3">Phase 3: Intensity (M 5-6)</option>
+            </select>
+            <select id="daySelect" onchange="renderExercises()" class="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none"></select>
+          </div>
+          <button onclick="openFormCuesModal()" data-allow-locked="true" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-cyan-400">
+            📖 Big 3 Cues
+          </button>
+        </div>
+
+        <div id="exerciseListContainer" class="space-y-3 pt-1"></div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end">
+          <button onclick="markWorkoutComplete()" id="completeWorkoutBtn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-black text-slate-950 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/20">
+            ✓ Complete Workout Session (+2.5 Aura Pts)
+          </button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 4: SQUAD & SAVAGE INDIAN HALL OF SHAME -->
+    <!-- ============================================================== -->
+    <div id="tab-leaderboard" class="tab-pane space-y-4">
+
+      <!-- SAVAGE INDIAN HALL OF SHAME WITH ZERO-FAIL MEME ENGINE -->
+      <section class="bg-gradient-to-br from-rose-950/60 via-slate-900 to-purple-950/50 border-2 border-rose-600/60 rounded-3xl p-4 md:p-5 shadow-2xl relative overflow-hidden">
+        <div class="flex items-center justify-between pb-3 border-b border-rose-800/40">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl animate-pulse">💀</span>
+            <div>
+              <h3 class="text-xs md:text-sm font-black uppercase tracking-widest text-rose-400">
+                ULTIMATE HALL OF SHAME — WEEKLY LOSER
+              </h3>
+              <p class="text-[10px] text-slate-400">Brutal roast card for the lowest Aura score in the squad.</p>
+            </div>
+          </div>
+          <button onclick="generateFreshSavageRoast()" data-allow-locked="true" class="text-[11px] px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-white transition shadow-md shadow-rose-900/50">
+            Shuffle Meme & Roast 🎲
+          </button>
+        </div>
+
+        <!-- Dynamic Content Card -->
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/90 p-3.5 rounded-2xl border border-rose-900/50">
+          
+          <!-- Zero-Fail Meme Visual Frame -->
+          <div class="md:col-span-5 space-y-1.5">
+            <div id="shameMemeFrame" class="relative rounded-xl overflow-hidden border border-rose-800/60 h-48 md:h-52 bg-slate-900 flex items-center justify-center">
+              <img id="shameMemeImg" 
+                   referrerpolicy="no-referrer"
+                   src="" 
+                   alt="Indian Gym Meme" 
+                   class="w-full h-full object-cover object-top" 
+                   onerror="handleMemeImgError(this)" />
+              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-2">
+                <span id="shameMemeTitle" class="text-[10px] font-black uppercase text-amber-300 font-mono tracking-wide">
+                  Tollywood Legend — Brahmanandam
+                </span>
+              </div>
+            </div>
+            <div class="text-[9px] text-slate-500 font-mono" id="shameMemeCredit">
+              Meme Legend: Padmashri Brahmanandam · King of Indian Comedy Expressions
+            </div>
+          </div>
+
+          <!-- Text Breakdown -->
+          <div class="md:col-span-7 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-1 border-b border-slate-800 pb-2">
+              <span class="text-xs font-black text-rose-400" id="shamedPersonName">🚨 Target: Sameer (Reels Merchant)</span>
+              <span class="text-[10px] font-mono text-slate-400 font-bold" id="shamedPointsGap">Behind #1 by 0 pts</span>
+            </div>
+
+            <!-- Punchline Dialog -->
+            <div class="p-2.5 bg-rose-950/30 rounded-xl border border-rose-800/40">
+              <p id="shameDialogue" class="text-xs md:text-sm font-extrabold text-amber-300 italic leading-snug">
+                "Brahmanandam: 'Rey! Entha pani chesav ra! Intha screen time pettukuni em peekudham ani!'"
+              </p>
+            </div>
+
+            <!-- Savage Humiliation Paragraph -->
+            <p id="shameRoastText" class="text-xs text-slate-200 leading-relaxed">
+              Doomscrolled way past the 4-hour strict cap straight into severe muscle catabolism. Left leg and right leg currently filing for divorce over zero squat volume.
+            </p>
+
+            <div class="pt-2 flex items-center justify-between text-xs">
+              <button onclick="copySavageRoast()" data-allow-locked="true" class="w-full py-2 bg-gradient-to-r from-rose-600 to-purple-600 hover:from-rose-500 hover:to-purple-500 text-white font-black rounded-xl transition shadow-lg text-center flex items-center justify-center gap-1.5">
+                <span>📋</span> Copy Humiliation Message for WhatsApp Squad Group
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SQUAD LEADERBOARD TABLE -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xs font-black uppercase tracking-wider text-white">Squad Aura Leaderboard</h2>
+            <p class="text-[10px] text-slate-400">Trailing 7-Day Net Score tally.</p>
+          </div>
+          <button onclick="openNewUserModal()" data-allow-locked="true" class="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-emerald-400 font-bold">
+            + Add Buddy
+          </button>
+        </div>
+
+        <div class="space-y-2" id="leaderboardContainer"></div>
+
+        <div class="pt-2 border-t border-slate-800 flex gap-2">
+          <button onclick="exportDataJSON()" data-allow-locked="true" class="flex-1 text-[11px] py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300">
+            Export JSON
+          </button>
+          <button onclick="importDataJSON()" data-allow-locked="true" class="flex-1 text-[11px] py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300">
+            Import JSON
+          </button>
+        </div>
+      </section>
+
+      <!-- AI COACH & SQUAD ROASTER -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[380px]">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-xs font-bold text-white">
+          <span>🤖 AI Fitness & Desi Squad Roaster</span>
+          <button onclick="openApiKeyModal()" data-allow-locked="true" class="text-[10px] text-slate-400 hover:text-emerald-400">⚙️ Key</button>
+        </div>
+        <div id="aiChatLog" class="flex-1 overflow-y-auto space-y-2.5 py-2 text-xs pr-1">
+          <div class="bg-slate-800/80 p-2.5 rounded-xl text-slate-200 border border-slate-700/60">
+            Namaste! I know your exact lifts, calories, screen time and squad rank. Ask me for hypertrophy form tips, cheap Indian protein sources, or to write a custom roast for your gym bro!
+          </div>
+        </div>
+        <form onsubmit="handleAiSubmit(event)" class="pt-2 border-t border-slate-800 flex gap-1.5">
+          <input type="text" id="aiUserInput" placeholder="Ask form tips or ask to roast someone..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none" />
+          <button type="submit" class="px-3 py-1.5 bg-emerald-600 text-slate-950 font-bold rounded-lg text-xs">Send</button>
+        </form>
+      </section>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB 5: CHARTS & ANALYTICS -->
+    <!-- ============================================================== -->
+    <div id="tab-charts" class="tab-pane space-y-4">
+
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+          <div>
+            <h2 class="text-xs font-black uppercase tracking-wider text-white">Gains & Aura Curves</h2>
+            <p class="text-[10px] text-slate-400">Track points velocity, weight progression, and calories.</p>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <select id="chartMetricSelect" onchange="renderAnalyticsCharts()" class="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2 py-1 text-emerald-400 font-bold focus:outline-none">
+              <option value="aura">Aura Points (0–10 Net)</option>
+              <option value="weight">Body Weight (kg)</option>
+              <option value="calories">Calories Intake</option>
+              <option value="screentime">Screen Time (Hours)</option>
+              <option value="steps">Daily Steps</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p-2 bg-slate-950/70 border border-slate-800 rounded-xl relative h-[280px]">
+          <canvas id="progressChart"></canvas>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs" id="chartStatsSummary"></div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- BOTTOM MOBILE NAVIGATION BAR -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-2 shadow-2xl">
+    <div class="max-w-md mx-auto grid grid-cols-5 gap-1 text-center">
+      <button onclick="switchTab('hub')" id="mnav-hub" class="flex flex-col items-center justify-center py-1 rounded-xl text-emerald-400 font-bold text-[10px] transition">
+        <span class="text-base">⚡</span> Hub
+      </button>
+      <button onclick="switchTab('diet')" id="mnav-diet" class="flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white font-medium text-[10px] transition">
+        <span class="text-base">🥗</span> Diet
+      </button>
+      <button onclick="switchTab('workout')" id="mnav-workout" class="flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white font-medium text-[10px] transition">
+        <span class="text-base">🏋️</span> Lift
+      </button>
+      <button onclick="switchTab('leaderboard')" id="mnav-leaderboard" class="flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white font-medium text-[10px] transition">
+        <span class="text-base">🏆</span> Squad
+      </button>
+      <button onclick="switchTab('charts')" id="mnav-charts" class="flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white font-medium text-[10px] transition">
+        <span class="text-base">📈</span> Trends
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL: CUSTOMIZE AVATAR & NAME -->
+  <div id="avatarModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+          <span>🎨</span> Customize Your Avatar
+        </h3>
+        <button onclick="closeAvatarModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-400">Display Name</label>
+          <input type="text" id="avatarNameInput" placeholder="e.g. Masood, Rahul" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="text-slate-400">Avatar Title / Persona</label>
+          <input type="text" id="avatarTitleInput" placeholder="e.g. Protein Rakshak, GigaChad, Bench Pandit" class="w-full mt-1 bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white font-bold focus:outline-none" />
+        </div>
+
+        <div>
+          <label class="text-slate-400 block mb-1.5">Choose Avatar Emoji</label>
+          <div class="grid grid-cols-6 gap-2 text-xl" id="avatarEmojiGrid"></div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeAvatarModal()" class="px-3 py-1.5 text-xs text-slate-400">Cancel</button>
+        <button onclick="saveAvatarProfile()" class="px-4 py-1.5 bg-emerald-600 text-slate-950 font-bold rounded-xl text-xs transition">Save Avatar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD CUSTOM FOOD -->
+  <div id="customFoodModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-3">
+      <div class="flex justify-between items-center text-sm font-bold text-white">
+        <span>➕ Add Custom Food</span>
+        <button onclick="closeCustomFoodModal()" class="text-slate-400">✕</button>
+      </div>
+      <div>
+        <label class="text-[11px] text-slate-400">Food Name</label>
+        <input type="text" id="customFoodName" placeholder="e.g. Soya Chunks Curry, Boiled Eggs" class="w-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none" />
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[11px] text-slate-400">Calories</label>
+          <input type="number" id="customFoodCal" placeholder="300" class="w-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-[11px] text-slate-400">Protein (g)</label>
+          <input type="number" id="customFoodProtein" placeholder="20" class="w-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none" />
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div>
+          <label class="text-[11px] text-slate-400">Carbs (g)</label>
+          <input type="number" id="customFoodCarbs" placeholder="30" class="w-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-[11px] text-slate-400">Fats (g)</label>
+          <input type="number" id="customFoodFats" placeholder="10" class="w-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-[11px] text-slate-400">Fiber (g)</label>
+          <input type="number" id="customFoodFiber" placeholder="3" class="w-full mt-0.5 bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-xs text-white focus:outline-none" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeCustomFoodModal()" class="px-3 py-1 text-xs text-slate-400">Cancel</button>
+        <button onclick="saveCustomFoodItem()" class="px-4 py-1.5 bg-emerald-600 text-slate-950 font-bold rounded-lg text-xs">Add to Diary</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BIG 3 CUES -->
+  <div id="formCuesModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-3 text-xs">
+      <div class="flex justify-between items-center font-bold text-white text-sm">
+        <span>📖 Golden Form Cues (Big 3)</span>
+        <button onclick="closeFormCuesModal()" class="text-slate-400">✕</button>
+      </div>
+      <p>🏋️ <strong class="text-emerald-400">Squat:</strong> Chest up, knees track over toes, sit back, push mid-foot.</p>
+      <p>⚡ <strong class="text-cyan-400">Deadlift:</strong> Bar close to shins, flat back, push floor away, rise together.</p>
+      <p>🛡️ <strong class="text-amber-400">Bench:</strong> Scapulae retracted, feet flat, bar touches lower chest.</p>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD BUDDY -->
+  <div id="newUserModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xs w-full p-5 space-y-3">
+      <h3 class="text-xs font-bold text-white uppercase">Add Gym Buddy</h3>
+      <input type="text" id="newUserNameInput" placeholder="Name (e.g. Rahul)" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none" />
+      <input type="number" id="newUserWeightInput" placeholder="Starting Weight (kg)" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none" />
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeNewUserModal()" class="text-xs text-slate-400">Cancel</button>
+        <button onclick="createUser()" class="px-3 py-1.5 bg-emerald-600 text-slate-950 font-bold rounded-lg text-xs">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GEMINI API KEY -->
+  <div id="apiKeyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xs w-full p-5 space-y-3 text-xs">
+      <h3 class="font-bold text-white">Gemini API Key</h3>
+      <p class="text-slate-400 text-[11px]">Optional: Insert key for live generative AI responses. Saved locally.</p>
+      <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none" />
+      <div class="flex justify-end gap-2 pt-1">
+        <button onclick="closeApiKeyModal()" class="text-slate-400">Cancel</button>
+        <button onclick="saveApiKey()" class="px-3 py-1 bg-emerald-600 text-slate-950 font-bold rounded-lg">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION SCRIPT -->
+  <script>
+    /* ==========================================================================
+       1. ZERO-FAIL INDIAN MEME TEMPLATE ENGINE WITH INLINE SVG POSTERS
+       ========================================================================== */
+    function makeMemeSvgPoster(title, character, emoji, bg1, bg2) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${bg1}" />
+            <stop offset="100%" stop-color="${bg2}" />
+          </linearGradient>
+        </defs>
+        <rect width="600" height="400" fill="url(#g)"/>
+        <circle cx="300" cy="150" r="75" fill="#020617" opacity="0.6"/>
+        <text x="300" y="175" font-family="system-ui, sans-serif" font-size="70" text-anchor="middle">${emoji}</text>
+        <rect x="25" y="270" width="550" height="100" rx="16" fill="#020617" opacity="0.95"/>
+        <text x="300" y="308" font-family="system-ui, sans-serif" font-weight="900" font-size="20" fill="#fcd34d" text-anchor="middle" letter-spacing="1">${title.toUpperCase()}</text>
+        <text x="300" y="342" font-family="system-ui, sans-serif" font-weight="700" font-size="15" fill="#f87171" text-anchor="middle">${character}</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    const SAVAGE_INDIAN_MEMES = [
+      {
+        title: "Tollywood Legend — Brahmanandam Facepalm",
+        character: "Padmashri Brahmanandam",
+        dialogue: "Brahmanandam: 'Rey! Entha pani chesav ra! Intha screen time pettukuni em peekudham ani!'",
+        roast: "Doomscrolled way past the 4-hour strict cap straight into severe muscle catabolism. Left leg and right leg currently filing for divorce over zero squat volume.",
+        svgFallback: makeMemeSvgPoster("Tollywood Legend", "Brahmanandam Facepalm", "🤦‍♂️", "#4c0519", "#020617"),
+        credit: "Meme Legend: Padmashri Brahmanandam · King of Indian Comedy Expressions"
+      },
+      {
+        title: "Hera Pheri (2000) — Babu Bhaiya",
+        character: "Baburao Ganpatrao Apte",
+        dialogue: "Babu Bhaiya: 'Utha le re baba... isko gym se utha le! 4 ghante reels dekh raha hai, dumbbell pe dhool jam gayi!'",
+        roast: "Bro logged 7.5 hours of Instagram doomscrolling and ate 400 calories all day. Arms looking like uncooked Maggi noodles, but giving gym advice in comments. Absolute cinema level clown.",
+        svgFallback: makeMemeSvgPoster("Hera Pheri (2000)", "Baburao Ganpatrao Apte", "👓", "#1e1b4b", "#020617"),
+        credit: "Movie Scene: Hera Pheri (2000) · Paresh Rawal as Baburao"
+      },
+      {
+        title: "Golmaal: Fun Unlimited (2006) — Vasooli Bhai",
+        character: "Vasooli Bhai (Panvel Express)",
+        dialogue: "Vasooli Bhai: 'Jaldi set kar kal subah Panvel nikalna hai! 20 minute se bench pe baith ke reels dekh raha hai!'",
+        roast: "Rests 12 minutes between 2.5kg dumbbell curls to check who viewed his story. Shaker cup has formed a new multicellular fungal colony. Zero aura, maximum shame.",
+        svgFallback: makeMemeSvgPoster("Golmaal (2006)", "Vasooli Bhai", "🚗", "#431407", "#020617"),
+        credit: "Movie Scene: Golmaal (2006) · Mukesh Tiwari as Vasooli Bhai"
+      },
+      {
+        title: "Gangs of Wasseypur (2012) — Ramadhir Singh",
+        character: "Ramadhir Singh",
+        dialogue: "Ramadhir Singh: 'Beta... tumse na ho payega! Tumhare lakshan bilkul theek nahi lag rahe!'",
+        roast: "Ate 1 biscuit and 1 cup chai, then claimed he is on a 'clean shred'. Skipped squat day for the 5th week in a row. South Indian movie ke side goons bhi isko ek phoonk me uda denge.",
+        svgFallback: makeMemeSvgPoster("Gangs of Wasseypur", "Ramadhir Singh", "🚬", "#3b0764", "#020617"),
+        credit: "Movie Scene: Gangs of Wasseypur (2012) · Tigmanshu Dhulia as Ramadhir"
+      },
+      {
+        title: "Welcome (2007) — Majnu Bhai Ki Painting",
+        character: "Majnu Bhai (Anil Kapoor)",
+        dialogue: "Majnu Bhai: 'Ye meri painting nahi, tumhari squat form ka MRI scan hai!'",
+        roast: "Deadlift form so crooked and rounded that nearby orthopedic surgeons are handing out visiting cards. Hits 15 grams of protein and expects biceps to grow by quantum tunneling.",
+        svgFallback: makeMemeSvgPoster("Welcome (2007)", "Majnu Bhai Ki Painting", "🎨", "#064e3b", "#020617"),
+        credit: "Movie Scene: Welcome (2007) · Anil Kapoor as Majnu Bhai"
+      },
+      {
+        title: "Mirzapur (2018) — Guddu Pandit",
+        character: "Guddu Bhaiya",
+        dialogue: "Guddu Pandit: 'Ab humko badla bhi lena hai aur 140g protein bhi poora karna hai!'",
+        roast: "Walked into gym at 7 PM, took 18 flash mirror selfies, touched one treadmill for 40 seconds, drank two sips of water, and left. Official mascot of the Cooked Squad.",
+        svgFallback: makeMemeSvgPoster("Mirzapur (2018)", "Guddu Pandit", "🔫", "#701a75", "#020617"),
+        credit: "Series Scene: Mirzapur · Ali Fazal as Guddu Pandit"
+      }
+    ];
+
+    let currentRoastIndex = 0;
+
+    function handleMemeImgError(imgElement) {
+      imgElement.onerror = null;
+      const meme = SAVAGE_INDIAN_MEMES[currentRoastIndex % SAVAGE_INDIAN_MEMES.length];
+      imgElement.src = meme.svgFallback;
+    }
+
+    /* ==========================================================================
+       2. WORKOUT & FOOD DATA STAPLES
+       ========================================================================== */
+    const PRESET_FOODS = [
+      { id: "egg_whole", name: "Whole Egg", serving: "1 egg", calories: 75, protein: 6, carbs: 0.5, fats: 5, fiber: 0 },
+      { id: "egg_whites", name: "Egg Whites", serving: "2 whites", calories: 34, protein: 7.2, carbs: 0.4, fats: 0.2, fiber: 0 },
+      { id: "roti", name: "Wheat Roti", serving: "1 roti", calories: 110, protein: 3.5, carbs: 22, fats: 0.5, fiber: 2.5 },
+      { id: "rice", name: "Cooked Rice", serving: "1 cup (150g)", calories: 205, protein: 4.2, carbs: 45, fats: 0.4, fiber: 1 },
+      { id: "chicken", name: "Chicken Breast", serving: "100g cooked", calories: 165, protein: 30, carbs: 0, fats: 4, fiber: 0 },
+      { id: "soya", name: "Soya Chunks", serving: "50g dry", calories: 170, protein: 26, carbs: 16, fats: 0.5, fiber: 6 },
+      { id: "dal", name: "Moong/Chana Dal", serving: "1 cup", calories: 220, protein: 15, carbs: 36, fats: 1.5, fiber: 8 },
+      { id: "milk", name: "Toned Milk", serving: "250ml (1 cup)", calories: 150, protein: 8, carbs: 12, fats: 7.5, fiber: 0 },
+      { id: "banana", name: "Banana", serving: "1 medium", calories: 105, protein: 1.3, carbs: 27, fats: 0.3, fiber: 3 },
+      { id: "whey", name: "Whey Protein", serving: "1 scoop (30g)", calories: 120, protein: 24, carbs: 2.5, fats: 1.5, fiber: 0 },
+      { id: "peanuts", name: "Peanuts / Chana", serving: "30g", calories: 170, protein: 8, carbs: 6, fats: 14, fiber: 2.5 },
+      { id: "sprouts", name: "Sprouts Chaat", serving: "1 cup", calories: 150, protein: 12, carbs: 22, fats: 1, fiber: 7 }
+    ];
+
+    const FIBER_SEEDS_TEMPLATES = [
+      { id: "f_chia", title: "Chia Seeds (15g / 1 tbsp)", role: "5g soluble fiber + Omega-3s. Keeps digestion smooth on 3k kcal." },
+      { id: "f_pumpkin", title: "Pumpkin Seeds (30g / 2 tbsp)", role: "9g protein + Zinc & Magnesium for testosterone recovery." },
+      { id: "f_flax", title: "Ground Flaxseeds (1 tbsp)", role: "Insoluble roughage & lignans against calorie surplus bloat." },
+      { id: "f_salad", title: "Raw Salad (Cucumber, Carrot)", role: "Natural hydration and digestive roughage." },
+      { id: "f_psyllium", title: "Psyllium Husk (1 tsp in water)", role: "Nighttime gut comfort to process poultry and eggs." }
+    ];
+
+    const WORKOUT_DATABASE = {
+      p1: {
+        name: "Phase 1: Foundation (Months 1-2)",
+        days: {
+          d1: {
+            title: "Day 1: Upper Body A",
+            exercises: [
+              { name: "Flat Barbell/DB Bench Press", sets: 3, reps: "8-10", rest: 120, cues: "Retract scapulae, touch lower chest" },
+              { name: "Lat Pulldown", sets: 3, reps: "10", rest: 90, cues: "Pull with elbows, squeeze lats" },
+              { name: "Seated DB Shoulder Press", sets: 3, reps: "10", rest: 90, cues: "Neutral spine, elbow at 75°" },
+              { name: "Seated Cable Row", sets: 3, reps: "10", rest: 90, cues: "Chest proud, pull to abdomen" },
+              { name: "DB Bicep Curl", sets: 2, reps: "12", rest: 60, cues: "Pin elbows to ribs" },
+              { name: "Rope Tricep Pushdown", sets: 2, reps: "12", rest: 60, cues: "Full extension at bottom" }
+            ]
+          },
+          d2: {
+            title: "Day 2: Lower Body A",
+            exercises: [
+              { name: "Squat (Barbell/Smith/Leg Press)", sets: 3, reps: "10", rest: 120, cues: "Sit between hips, push mid-foot" },
+              { name: "Romanian Deadlift", sets: 3, reps: "10", rest: 90, cues: "Hinge at hips, hamstring stretch" },
+              { name: "Leg Extension", sets: 2, reps: "12", rest: 60, cues: "Controlled eccentric" },
+              { name: "Lying Leg Curl", sets: 2, reps: "12", rest: 60, cues: "Glutes pinned to bench" },
+              { name: "Standing Calf Raise", sets: 3, reps: "15", rest: 60, cues: "2s stretch at bottom" },
+              { name: "Plank", sets: 3, reps: "30-45s", rest: 45, cues: "Tight glutes and abs" }
+            ]
+          }
+        }
+      },
+      p2: {
+        name: "Phase 2: Growth (Months 3-4)",
+        days: {
+          d1: {
+            title: "Day 1: Push",
+            exercises: [
+              { name: "Barbell Bench Press", sets: 4, reps: "8", rest: 120, cues: "Explosive leg drive" },
+              { name: "Overhead Shoulder Press", sets: 3, reps: "10", rest: 90, cues: "Lockout overhead" },
+              { name: "Incline DB Press", sets: 3, reps: "10", rest: 90, cues: "Upper chest angle" },
+              { name: "Lateral Raise", sets: 3, reps: "15", rest: 60, cues: "High volume pump" }
+            ]
+          }
+        }
+      },
+      p3: {
+        name: "Phase 3: Intensity (Months 5-6)",
+        days: {
+          d1: {
+            title: "Day 1: Chest + Triceps",
+            exercises: [
+              { name: "Barbell Bench Press", sets: 4, reps: "6-8", rest: 120, cues: "Heavy strength sets" },
+              { name: "Cable Fly", sets: 3, reps: "12", rest: 60, cues: "Peak contraction" },
+              { name: "Tricep Pushdown (drop set last)", sets: 3, reps: "12", rest: 60, cues: "Drop weight by 30% on last set" }
+            ]
+          }
+        }
+      }
+    };
+
+    /* ==========================================================================
+       3. SQUAD STORAGE WITH CLEAN START & HARDCODED 4.0H LIMIT
+       ========================================================================== */
+    const STORAGE_KEY = "irontrack_squad_clean_v11";
+    const HARDCODED_SCREEN_LIMIT = 4.0; // STRICT 4-HOUR CAP
+
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    const DEFAULT_USERS = [
+      { id: "u_self", name: "Masood", avatarTitle: "GigaChad", avatarEmoji: "🦁", currentWeight: 60.0, trackShare: true, logs: {} },
+      { id: "u_b1", name: "Aman", avatarTitle: "Bench Pandit", avatarEmoji: "🦍", currentWeight: 63.5, trackShare: true, logs: {} },
+      { id: "u_b2", name: "Kunal", avatarTitle: "Locked In", avatarEmoji: "⚡", currentWeight: 58.2, trackShare: true, logs: {} },
+      { id: "u_b3", name: "Sameer", avatarTitle: "Reels Merchant", avatarEmoji: "💀", currentWeight: 65.0, trackShare: true, logs: {} }
+    ];
+
+    let appState = {
+      users: DEFAULT_USERS,
+      activeUserId: "u_self",
+      selectedDate: getTodayDateString(),
+      currentPhase: "p1",
+      currentDay: "d1",
+      currentTab: "hub",
+      geminiApiKey: ""
+    };
+
+    let progressChartInstance = null;
+
+    function isPastDate(dateStr) {
+      return dateStr < getTodayDateString();
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { 
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+        } catch (e) {}
+      }
+      appState.selectedDate = getTodayDateString();
+      initCleanSquadState();
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      updateUI();
+    }
+
+    // Initialize clean starting profiles without fake history so everyone begins fresh today!
+    function initCleanSquadState() {
+      const todayStr = getTodayDateString();
+      appState.users.forEach(u => {
+        if (!u.logs) u.logs = {};
+        if (!u.logs[todayStr]) {
+          u.logs[todayStr] = {
+            weight: null,
+            water: 0,
+            calories: 0,
+            protein: 0,
+            carbs: 0,
+            fats: 0,
+            fiber: 0,
+            steps: 0,
+            screenTime: 0,
+            workoutDone: false,
+            fiberDone: [],
+            dailyNotes: "",
+            foodDiary: [],
+            exercises: {}
+          };
+        }
+      });
+    }
+
+    function getActiveUser() {
+      return appState.users.find(u => u.id === appState.activeUserId) || appState.users[0];
+    }
+
+    function getActiveDayLog() {
+      const user = getActiveUser();
+      if (!user.logs) user.logs = {};
+      if (!user.logs[appState.selectedDate]) {
+        user.logs[appState.selectedDate] = {
+          weight: null,
+          water: 0,
+          calories: 0,
+          protein: 0,
+          carbs: 0,
+          fats: 0,
+          fiber: 0,
+          steps: 0,
+          screenTime: 0,
+          workoutDone: false,
+          fiberDone: [],
+          dailyNotes: "",
+          foodDiary: [],
+          exercises: {}
+        };
+      }
+      return user.logs[appState.selectedDate];
+    }
+
+    /* ==========================================================================
+       4. STRICT 4-HOUR CAP DOOMSCROLL & AURA POINT ALGORITHM
+       ========================================================================== */
+    function calculateDayPoints(log) {
+      if (!log) return { base: 0, penalty: 0, bonus: 0, net: 0 };
+      let basePoints = 0;
+
+      if (log.workoutDone) basePoints += 2.5;
+
+      const cal = log.calories || 0;
+      if (cal >= 2800) basePoints += 2.0;
+      else if (cal > 0) basePoints += Math.min(2.0, Math.round((cal / 2800) * 2.0 * 10) / 10);
+
+      const prot = log.protein || 0;
+      if (prot >= 130) basePoints += 1.5;
+      else if (prot > 0) basePoints += Math.min(1.5, Math.round((prot / 130) * 1.5 * 10) / 10);
+
+      const steps = log.steps || 0;
+      if (steps >= 8000) basePoints += 1.5;
+      else if (steps > 0) basePoints += Math.min(1.5, Math.round((steps / 8000) * 1.5 * 10) / 10);
+
+      const water = log.water || 0;
+      if (water >= 3.5) basePoints += 1.0;
+      else if (water > 0) basePoints += Math.min(1.0, Math.round((water / 3.5) * 1.0 * 10) / 10);
+
+      const fiberCount = (log.fiberDone || []).length;
+      if (fiberCount >= 3) basePoints += 0.75;
+      else if (fiberCount > 0) basePoints += Math.round((fiberCount / 3) * 0.75 * 10) / 10;
+
+      if (log.weight) basePoints += 0.75;
+
+      // STRICT 4-HOUR CAP CALCULATION
+      const actualST = log.screenTime || 0;
+      let screenPenalty = 0;
+
+      if (actualST > HARDCODED_SCREEN_LIMIT) {
+        screenPenalty = Math.round((actualST - HARDCODED_SCREEN_LIMIT) * 1.5 * 10) / 10;
+      }
+
+      let touchGrassBonus = 0;
+      if (actualST > 0 && actualST <= (HARDCODED_SCREEN_LIMIT - 1.0)) {
+        touchGrassBonus = 0.5;
+      }
+
+      const netScore = Math.max(0, Math.round((basePoints - screenPenalty + touchGrassBonus) * 10) / 10);
+
+      return {
+        base: Math.round(basePoints * 10) / 10,
+        penalty: screenPenalty,
+        bonus: touchGrassBonus,
+        net: netScore
+      };
+    }
+
+    /* ==========================================================================
+       5. PAST DATE GUARD & CONTROLLERS
+       ========================================================================== */
+    function checkPastDateGuard() {
+      if (isPastDate(appState.selectedDate)) {
+        alert("🔒 This is a past date! Historical records are locked and cannot be edited.");
+        return true;
+      }
+      return false;
+    }
+
+    function goToToday() {
+      appState.selectedDate = getTodayDateString();
+      document.getElementById("activeDateInput").value = appState.selectedDate;
+      saveState();
+    }
+
+    function updateScreenTimeFromSlider(hours) {
+      if (checkPastDateGuard()) return;
+      const dayLog = getActiveDayLog();
+      dayLog.screenTime = parseFloat(hours);
+      saveState();
+    }
+
+    /* ==========================================================================
+       6. LEADERBOARD & SAVAGE REGIONAL HALL OF SHAME
+       ========================================================================== */
+    function renderLeaderboardAndRoast() {
+      const container = document.getElementById("leaderboardContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const today = new Date(appState.selectedDate);
+      const userScores = appState.users.map(u => {
+        let weeklyTotal = 0;
+        let daysActive = 0;
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          const dateStr = d.toISOString().split("T")[0];
+          const log = u.logs ? u.logs[dateStr] : null;
+          if (log) {
+            const score = calculateDayPoints(log);
+            weeklyTotal += score.net;
+            daysActive++;
+          }
+        }
+
+        return {
+          user: u,
+          total: Math.round(weeklyTotal * 10) / 10,
+          avg: daysActive > 0 ? Math.round((weeklyTotal / daysActive) * 10) / 10 : 0
+        };
+      });
+
+      userScores.sort((a, b) => b.total - a.total);
+
+      userScores.forEach((item, idx) => {
+        const isSelf = item.user.id === appState.activeUserId;
+        const card = document.createElement("div");
+        card.className = `p-3 rounded-xl border flex items-center justify-between text-xs transition ${
+          idx === 0 
+            ? 'bg-amber-950/20 border-amber-500/40 text-amber-200'
+            : (idx === userScores.length - 1 ? 'bg-rose-950/20 border-rose-800/40' : 'bg-slate-950/60 border-slate-800')
+        }`;
+
+        let medal = `#${idx + 1}`;
+        if (idx === 0) medal = "👑 GigaChad";
+        if (idx === 1) medal = "🥈 Locked In";
+        if (idx === userScores.length - 1) medal = "💀 Cooked";
+
+        const emoji = item.user.avatarEmoji || "🦁";
+        const title = item.user.avatarTitle || "Trainee";
+
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="font-black text-xs font-mono w-16">${medal}</span>
+            <span class="text-xl">${emoji}</span>
+            <div>
+              <span class="font-bold ${isSelf ? 'text-emerald-300' : 'text-white'}">${item.user.name} ${isSelf ? '(You)' : ''}</span>
+              <div class="text-[10px] text-purple-300 font-mono">${title} · Cap: 4.0h</div>
+            </div>
+          </div>
+          <div class="text-right font-mono">
+            <div class="font-black text-emerald-400 text-sm">${item.total} pts</div>
+            <span class="text-[10px] text-slate-500">${item.avg} avg/day</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Update Hall of Shame with the Lowest Scorer
+      const lastPlace = userScores[userScores.length - 1];
+      const firstPlace = userScores[0];
+      const gap = Math.round((firstPlace.total - lastPlace.total) * 10) / 10;
+
+      document.getElementById("shamedPersonName").textContent = `🚨 Target: ${lastPlace.user.name} (${lastPlace.user.avatarTitle || 'Cooked'})`;
+      document.getElementById("shamedPointsGap").textContent = gap === 0 ? "All tied at starting line!" : `Behind #1 by -${gap} pts this week`;
+
+      applyRoastDisplay(currentRoastIndex);
+    }
+
+    function applyRoastDisplay(idx) {
+      const meme = SAVAGE_INDIAN_MEMES[idx % SAVAGE_INDIAN_MEMES.length];
+      const imgEl = document.getElementById("shameMemeImg");
+      imgEl.onerror = null;
+      imgEl.src = meme.svgFallback; // Always reliable SVG poster
+      document.getElementById("shameMemeTitle").textContent = meme.title;
+      document.getElementById("shameDialogue").textContent = `"${meme.dialogue}"`;
+      document.getElementById("shameRoastText").textContent = meme.roast;
+      document.getElementById("shameMemeCredit").textContent = meme.credit;
+    }
+
+    function generateFreshSavageRoast() {
+      currentRoastIndex = (currentRoastIndex + 1) % SAVAGE_INDIAN_MEMES.length;
+      applyRoastDisplay(currentRoastIndex);
+    }
+
+    function copySavageRoast() {
+      const target = document.getElementById("shamedPersonName").textContent;
+      const dialog = document.getElementById("shameDialogue").textContent;
+      const roast = document.getElementById("shameRoastText").textContent;
+      const credit = document.getElementById("shameMemeCredit").textContent;
+
+      const fullText = `💀 IRONTRACK SQUAD HALL OF SHAME 💀\n${target}\n\n${dialog}\n\n${roast}\n\n[${credit}]\nDrop the phone and hit the gym bro!`;
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert("Savage roast copied to clipboard! Drop it into your squad WhatsApp group!");
+      });
+    }
+
+    /* ==========================================================================
+       7. AVATAR & NAME CUSTOMIZATION MODAL
+       ========================================================================== */
+    const AVAILABLE_AVATAR_EMOJIS = ["🦁", "🦍", "⚡", "👑", "🦏", "💀", "🏋️", "🔥", "🐅", "🗿", "🥊", "🕶️"];
+    let selectedAvatarEmoji = "🦁";
+
+    function openAvatarModal() {
+      const user = getActiveUser();
+      document.getElementById("avatarNameInput").value = user.name;
+      document.getElementById("avatarTitleInput").value = user.avatarTitle || "GigaChad";
+      selectedAvatarEmoji = user.avatarEmoji || "🦁";
+
+      const grid = document.getElementById("avatarEmojiGrid");
+      grid.innerHTML = "";
+      AVAILABLE_AVATAR_EMOJIS.forEach(emoji => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.onclick = () => selectEmoji(emoji);
+        btn.className = `p-2 rounded-xl border text-center transition ${emoji === selectedAvatarEmoji ? 'bg-purple-600 border-purple-400 scale-110' : 'bg-slate-800 border-slate-700'}`;
+        btn.textContent = emoji;
+        btn.id = `emoji_btn_${emoji}`;
+        grid.appendChild(btn);
+      });
+
+      document.getElementById("avatarModal").classList.remove("hidden");
+    }
+
+    function selectEmoji(emoji) {
+      selectedAvatarEmoji = emoji;
+      AVAILABLE_AVATAR_EMOJIS.forEach(e => {
+        const el = document.getElementById(`emoji_btn_${e}`);
+        if (el) el.className = `p-2 rounded-xl border text-center transition ${e === emoji ? 'bg-purple-600 border-purple-400 scale-110' : 'bg-slate-800 border-slate-700'}`;
+      });
+    }
+
+    function closeAvatarModal() {
+      document.getElementById("avatarModal").classList.add("hidden");
+    }
+
+    function saveAvatarProfile() {
+      const user = getActiveUser();
+      const newName = document.getElementById("avatarNameInput").value.trim();
+      const newTitle = document.getElementById("avatarTitleInput").value.trim();
+
+      if (newName) user.name = newName;
+      user.avatarTitle = newTitle || "Protein Rakshak";
+      user.avatarEmoji = selectedAvatarEmoji;
+
+      closeAvatarModal();
+      saveState();
+    }
+
+    /* ==========================================================================
+       8. DIET AUTO-COUNTER LOGIC
+       ========================================================================== */
+    function renderQuickAddGrid() {
+      const grid = document.getElementById("quickAddGrid");
+      grid.innerHTML = "";
+
+      PRESET_FOODS.forEach(food => {
+        const btn = document.createElement("button");
+        btn.onclick = () => addFoodToDiary(food);
+        btn.className = "p-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 rounded-xl text-left transition flex flex-col justify-between";
+        btn.innerHTML = `
+          <div class="font-bold text-white text-[11px] truncate">${food.name}</div>
+          <div class="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
+            <span>${food.serving}</span>
+            <span class="text-emerald-400 font-bold font-mono">${food.calories} kcal</span>
+          </div>
+        `;
+        grid.appendChild(btn);
+      });
+    }
+
+    function addFoodToDiary(foodObj, customServings = 1) {
+      if (checkPastDateGuard()) return;
+      const dayLog = getActiveDayLog();
+      if (!dayLog.foodDiary) dayLog.foodDiary = [];
+
+      dayLog.foodDiary.push({
+        id: "f_" + Date.now(),
+        name: foodObj.name,
+        serving: foodObj.serving || "1 serving",
+        calories: Math.round(foodObj.calories * customServings),
+        protein: Math.round(foodObj.protein * customServings * 10) / 10,
+        carbs: Math.round((foodObj.carbs || 0) * customServings * 10) / 10,
+        fats: Math.round((foodObj.fats || 0) * customServings * 10) / 10,
+        fiber: Math.round((foodObj.fiber || 0) * customServings * 10) / 10
+      });
+
+      recalculateDietTotals();
+      saveState();
+    }
+
+    function removeFoodDiaryEntry(id) {
+      if (checkPastDateGuard()) return;
+      const dayLog = getActiveDayLog();
+      dayLog.foodDiary = dayLog.foodDiary.filter(x => x.id !== id);
+      recalculateDietTotals();
+      saveState();
+    }
+
+    function recalculateDietTotals() {
+      const dayLog = getActiveDayLog();
+      let cal = 0, pro = 0, carbs = 0, fats = 0, fib = 0;
+
+      (dayLog.foodDiary || []).forEach(x => {
+        cal += Number(x.calories) || 0;
+        pro += Number(x.protein) || 0;
+        carbs += Number(x.carbs) || 0;
+        fats += Number(x.fats) || 0;
+        fib += Number(x.fiber) || 0;
+      });
+
+      dayLog.calories = Math.round(cal);
+      dayLog.protein = Math.round(pro);
+      dayLog.carbs = Math.round(carbs);
+      dayLog.fats = Math.round(fats);
+      dayLog.fiber = Math.round(fib);
+    }
+
+    function renderFoodDiary() {
+      const dayLog = getActiveDayLog();
+      const container = document.getElementById("foodDiaryList");
+      const countEl = document.getElementById("diaryItemsCount");
+      container.innerHTML = "";
+
+      const diary = dayLog.foodDiary || [];
+      countEl.textContent = `${diary.length} logged`;
+
+      if (diary.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 italic text-center p-3">No meals logged yet today. Tap any quick button above!</div>`;
+        return;
+      }
+
+      diary.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between p-2 bg-slate-950/70 border border-slate-800 rounded-lg text-xs";
+        row.innerHTML = `
+          <div>
+            <span class="font-bold text-white">${item.name}</span>
+            <span class="text-[10px] text-slate-400 font-mono">(${item.protein}g Pro · ${item.carbs}g C)</span>
+          </div>
+          <div class="flex items-center gap-2 font-mono">
+            <span class="text-emerald-400 font-bold">${item.calories} kcal</span>
+            <button onclick="removeFoodDiaryEntry('${item.id}')" class="text-slate-500 hover:text-rose-400">✕</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function openCustomFoodModal() {
+      if (checkPastDateGuard()) return;
+      document.getElementById("customFoodModal").classList.remove("hidden");
+    }
+    function closeCustomFoodModal() { document.getElementById("customFoodModal").classList.add("hidden"); }
+
+    function saveCustomFoodItem() {
+      if (checkPastDateGuard()) return;
+      const name = document.getElementById("customFoodName").value.trim();
+      const cal = parseFloat(document.getElementById("customFoodCal").value) || 0;
+      const pro = parseFloat(document.getElementById("customFoodProtein").value) || 0;
+      const carbs = parseFloat(document.getElementById("customFoodCarbs").value) || 0;
+      const fats = parseFloat(document.getElementById("customFoodFats").value) || 0;
+      const fiber = parseFloat(document.getElementById("customFoodFiber").value) || 0;
+
+      if (!name || cal <= 0) return alert("Please enter food name & calories");
+
+      addFoodToDiary({ name, serving: "1 serving", calories: cal, protein: pro, carbs, fats, fiber });
+      closeCustomFoodModal();
+    }
+
+    /* ==========================================================================
+       9. FIBER, WATER, STEPS & WEIGHT
+       ========================================================================== */
+    function renderFiberSeedsTracker() {
+      const container = document.getElementById("fiberSeedsContainer");
+      container.innerHTML = "";
+      const dayLog = getActiveDayLog();
+      const fiberDone = dayLog.fiberDone || [];
+
+      FIBER_SEEDS_TEMPLATES.forEach(item => {
+        const isChecked = fiberDone.includes(item.id);
+        const card = document.createElement("label");
+        card.className = `p-2.5 rounded-lg border flex items-start gap-2 cursor-pointer text-xs transition ${
+          isChecked ? 'bg-emerald-950/30 border-emerald-700/60 text-white' : 'bg-slate-950/60 border-slate-800 text-slate-300'
+        }`;
+        card.innerHTML = `
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleFiberDone('${item.id}', this.checked)" class="mt-0.5 rounded bg-slate-800 border-slate-700 text-emerald-500 focus:ring-0" />
+          <div class="select-none">
+            <div class="font-bold text-white">${item.title}</div>
+            <p class="text-[10px] text-slate-400 mt-0.5 leading-tight">${item.role}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      document.getElementById("fiberStatusTag").textContent = `${fiberDone.length}/5 Done`;
+    }
+
+    function toggleFiberDone(id, checked) {
+      if (checkPastDateGuard()) return;
+      const dayLog = getActiveDayLog();
+      if (!dayLog.fiberDone) dayLog.fiberDone = [];
+      if (checked && !dayLog.fiberDone.includes(id)) dayLog.fiberDone.push(id);
+      else if (!checked) dayLog.fiberDone = dayLog.fiberDone.filter(x => x !== id);
+      saveState();
+    }
+
+    function adjustWater(amount) {
+      if (checkPastDateGuard()) return;
+      const dayLog = getActiveDayLog();
+      dayLog.water = Math.max(0, Math.round(((dayLog.water || 0) + amount) * 100) / 100);
+      saveState();
+    }
+
+    function saveMorningWeightFromHub() {
+      if (checkPastDateGuard()) return;
+      const val = parseFloat(document.getElementById("hubWeightInput").value);
+      if (!val) return;
+      getActiveUser().currentWeight = val;
+      getActiveDayLog().weight = val;
+      saveState();
+    }
+
+    function saveStepsFromHub() {
+      if (checkPastDateGuard()) return;
+      const val = parseInt(document.getElementById("hubStepsInput").value) || 0;
+      getActiveDayLog().steps = val;
+      saveState();
+    }
+
+    function addQuickSteps(amount) {
+      if (checkPastDateGuard()) return;
+      const dayLog = getActiveDayLog();
+      dayLog.steps = (dayLog.steps || 0) + amount;
+      saveState();
+    }
+
+    /* ==========================================================================
+       10. WORKOUT TRACKER RENDERING
+       ========================================================================== */
+    function renderDaySelect() {
+      const daySelect = document.getElementById("daySelect");
+      const phase = WORKOUT_DATABASE[appState.currentPhase];
+      daySelect.innerHTML = "";
+
+      Object.keys(phase.days).forEach(dKey => {
+        const opt = document.createElement("option");
+        opt.value = dKey;
+        opt.textContent = phase.days[dKey].title;
+        if (dKey === appState.currentDay) opt.selected = true;
+        daySelect.appendChild(opt);
+      });
+    }
+
+    function renderExercises() {
+      const phaseSelect = document.getElementById("phaseSelect");
+      const daySelect = document.getElementById("daySelect");
+
+      appState.currentPhase = phaseSelect.value;
+      if (!WORKOUT_DATABASE[appState.currentPhase].days[daySelect.value]) {
+        appState.currentDay = "d1";
+      } else {
+        appState.currentDay = daySelect.value;
+      }
+      renderDaySelect();
+
+      const currentDayData = WORKOUT_DATABASE[appState.currentPhase].days[appState.currentDay];
+      const container = document.getElementById("exerciseListContainer");
+      container.innerHTML = "";
+
+      const dayLog = getActiveDayLog();
+      if (!dayLog.exercises) dayLog.exercises = {};
+
+      currentDayData.exercises.forEach((ex, exIndex) => {
+        if (!dayLog.exercises[ex.name]) {
+          dayLog.exercises[ex.name] = [];
+          for (let s = 1; s <= ex.sets; s++) {
+            dayLog.exercises[ex.name].push({ weight: "", reps: "", done: false });
+          }
+        }
+
+        const exSets = dayLog.exercises[ex.name];
+        const card = document.createElement("div");
+        card.className = "bg-slate-950/80 border border-slate-800 rounded-xl p-3";
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+            <div>
+              <h4 class="text-xs font-bold text-slate-100">${ex.name}</h4>
+              <p class="text-[10px] text-slate-400">${ex.sets} Sets × ${ex.reps} · 💡 ${ex.cues}</p>
+            </div>
+            <button onclick="startTimer(${ex.rest})" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-mono">
+              ⏱️ ${ex.rest >= 60 ? (ex.rest/60) + 'm' : ex.rest + 's'}
+            </button>
+          </div>
+          <div class="space-y-1.5" id="sets_${exIndex}"></div>
+        `;
+        container.appendChild(card);
+
+        const setsContainer = card.querySelector(`#sets_${exIndex}`);
+        exSets.forEach((setObj, setIndex) => {
+          const row = document.createElement("div");
+          row.className = "flex items-center gap-2 text-xs bg-slate-900/60 p-1.5 rounded-lg border border-slate-800/80";
+          row.innerHTML = `
+            <span class="w-10 text-slate-400 font-mono text-[10px]">S${setIndex + 1}</span>
+            <input type="number" placeholder="kg" value="${setObj.weight || ''}" onchange="updateSetVal('${ex.name}', ${setIndex}, 'weight', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-white font-bold" />
+            <input type="number" placeholder="reps" value="${setObj.reps || ''}" onchange="updateSetVal('${ex.name}', ${setIndex}, 'reps', this.value)" class="w-16 bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-white font-bold" />
+            <label class="ml-auto flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" ${setObj.done ? 'checked' : ''} onchange="toggleSetDone('${ex.name}', ${setIndex}, this.checked)" class="rounded bg-slate-800 text-emerald-500" />
+              <span class="text-[10px] ${setObj.done ? 'text-emerald-400 font-bold' : 'text-slate-400'}">Done</span>
+            </label>
+          `;
+          setsContainer.appendChild(row);
+        });
+      });
+    }
+
+    function updateSetVal(exName, idx, field, val) {
+      if (checkPastDateGuard()) return;
+      getActiveDayLog().exercises[exName][idx][field] = val;
+      saveState();
+    }
+
+    function toggleSetDone(exName, idx, done) {
+      if (checkPastDateGuard()) return;
+      getActiveDayLog().exercises[exName][idx].done = done;
+      saveState();
+    }
+
+    function markWorkoutComplete() {
+      if (checkPastDateGuard()) return;
+      const log = getActiveDayLog();
+      log.workoutDone = !log.workoutDone;
+      saveState();
+      if (log.workoutDone) triggerChime();
+    }
+
+    /* ==========================================================================
+       11. CHARTS (CHART.JS)
+       ========================================================================== */
+    function renderAnalyticsCharts() {
+      const canvas = document.getElementById("progressChart");
+      if (!canvas) return;
+
+      const user = getActiveUser();
+      const metric = document.getElementById("chartMetricSelect").value;
+      const labels = [];
+      const dataPoints = [];
+      const today = new Date(appState.selectedDate);
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0];
+        labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+
+        const log = (user.logs && user.logs[dateStr]) ? user.logs[dateStr] : {};
+        if (metric === 'aura') {
+          const score = calculateDayPoints(log);
+          dataPoints.push(score.net);
+        } else if (metric === 'weight') {
+          dataPoints.push(log.weight || null);
+        } else if (metric === 'calories') {
+          dataPoints.push(log.calories || 0);
+        } else if (metric === 'screentime') {
+          dataPoints.push(log.screenTime || 0);
+        } else if (metric === 'steps') {
+          dataPoints.push(log.steps || 0);
+        }
+      }
+
+      const configMap = {
+        aura: { label: "Net Aura Points", color: "#a855f7", unit: "pts", target: 10 },
+        weight: { label: "Morning Weight", color: "#10b981", unit: "kg", target: 68 },
+        calories: { label: "Calories", color: "#34d399", unit: "kcal", target: 3000 },
+        screentime: { label: "Screen Time", color: "#f43f5e", unit: "hrs", target: HARDCODED_SCREEN_LIMIT },
+        steps: { label: "Daily Steps", color: "#38bdf8", unit: "steps", target: 8000 }
+      };
+
+      const cur = configMap[metric];
+
+      if (progressChartInstance) progressChartInstance.destroy();
+
+      progressChartInstance = new Chart(canvas, {
+        type: metric === 'steps' ? 'bar' : 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: cur.label,
+            data: dataPoints,
+            borderColor: cur.color,
+            backgroundColor: metric === 'steps' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(168, 85, 247, 0.1)',
+            borderWidth: 2.5,
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: cur.color
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(51, 65, 85, 0.2)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(51, 65, 85, 0.2)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+          }
+        }
+      });
+
+      const validPoints = dataPoints.filter(p => p !== null && p > 0);
+      const avg = validPoints.length > 0 ? Math.round((validPoints.reduce((a, b) => a + b, 0) / validPoints.length) * 10) / 10 : 0;
+      const latest = validPoints.length > 0 ? validPoints[validPoints.length - 1] : 0;
+
+      document.getElementById("chartStatsSummary").innerHTML = `
+        <div class="p-2 bg-slate-950/70 border border-slate-800 rounded-lg">
+          <div class="text-[10px] text-slate-400">Current</div>
+          <div class="text-sm font-bold text-purple-400 font-mono">${latest} ${cur.unit}</div>
+        </div>
+        <div class="p-2 bg-slate-950/70 border border-slate-800 rounded-lg">
+          <div class="text-[10px] text-slate-400">7-Day Avg</div>
+          <div class="text-sm font-bold text-white font-mono">${avg} ${cur.unit}</div>
+        </div>
+        <div class="p-2 bg-slate-950/70 border border-slate-800 rounded-lg">
+          <div class="text-[10px] text-slate-400">Target</div>
+          <div class="text-sm font-bold text-emerald-400 font-mono">${cur.target} ${cur.unit}</div>
+        </div>
+        <div class="p-2 bg-slate-950/70 border border-slate-800 rounded-lg">
+          <div class="text-[10px] text-slate-400">Status</div>
+          <div class="text-xs font-bold ${latest >= cur.target ? 'text-emerald-400' : 'text-rose-400'} mt-0.5">${latest >= cur.target ? 'GigaChad W' : 'Cooked'}</div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       12. TIMER & AUDIO
+       ========================================================================== */
+    let timerInt = null, timerLeft = 0;
+    function triggerChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.6);
+      } catch (e) {}
+    }
+
+    function startTimer(sec) {
+      clearInterval(timerInt);
+      timerLeft = sec;
+      const bar = document.getElementById("timerBar");
+      bar.classList.remove("hidden");
+      function upd() {
+        const m = Math.floor(timerLeft/60), s = timerLeft%60;
+        document.getElementById("timerTime").textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        if (timerLeft <= 0) { clearInterval(timerInt); bar.classList.add("hidden"); triggerChime(); alert("Rest over! Locked in!"); }
+        timerLeft--;
+      }
+      upd();
+      timerInt = setInterval(upd, 1000);
+    }
+    function cancelTimer() { clearInterval(timerInt); document.getElementById("timerBar").classList.add("hidden"); }
+
+    /* ==========================================================================
+       13. RESPONSIVE TABS & UI UPDATE WITH PAST-DATE LOCKING
+       ========================================================================== */
+    function switchTab(tabId) {
+      appState.currentTab = tabId;
+      document.querySelectorAll(".tab-pane").forEach(el => el.classList.remove("active"));
+      const targetPane = document.getElementById(`tab-${tabId}`);
+      if (targetPane) targetPane.classList.add("active");
+
+      document.querySelectorAll("[id^='dnav-']").forEach(btn => {
+        btn.className = "px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition";
+      });
+      const curDnav = document.getElementById(`dnav-${tabId}`);
+      if (curDnav) curDnav.className = "px-3.5 py-1.5 rounded-lg bg-emerald-600 text-slate-950 font-bold transition";
+
+      document.querySelectorAll("[id^='mnav-']").forEach(btn => {
+        btn.className = "flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 hover:text-white font-medium text-[10px] transition";
+      });
+      const curMnav = document.getElementById(`mnav-${tabId}`);
+      if (curMnav) curMnav.className = "flex flex-col items-center justify-center py-1 rounded-xl text-emerald-400 font-bold text-[10px] transition";
+
+      if (tabId === "charts") renderAnalyticsCharts();
+      if (tabId === "leaderboard") renderLeaderboardAndRoast();
+    }
+
+    function updateUI() {
+      const user = getActiveUser();
+      const log = getActiveDayLog();
+      const past = isPastDate(appState.selectedDate);
+
+      // Manage Locked Past-Date Visuals & Warning
+      const banner = document.getElementById("pastDateLockedBanner");
+      const mainContainer = document.getElementById("mainAppContent");
+      if (past) {
+        banner.classList.remove("hidden");
+        mainContainer.classList.add("locked-past-mode");
+      } else {
+        banner.classList.add("hidden");
+        mainContainer.classList.remove("locked-past-mode");
+      }
+
+      // Update User Selector
+      const select = document.getElementById("userSelect");
+      select.innerHTML = "";
+      appState.users.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u.id;
+        const icon = u.avatarEmoji || "🦁";
+        opt.textContent = `${icon} ${u.name}`;
+        if (u.id === appState.activeUserId) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      // Update Hub Profile Badge
+      document.getElementById("hubAvatarEmojiDisplay").textContent = user.avatarEmoji || "🦁";
+      document.getElementById("hubAvatarNameDisplay").textContent = user.name;
+      document.getElementById("hubAvatarTitleDisplay").textContent = user.avatarTitle || "GigaChad";
+      document.getElementById("hubUserWeightDisplay").textContent = (user.currentWeight || 60.0) + " kg";
+
+      // Calculate Daily Points
+      const score = calculateDayPoints(log);
+      document.getElementById("auraPointsTotalDisplay").textContent = score.net.toFixed(1);
+
+      const rankBadge = document.getElementById("auraRankBadge");
+      if (score.net >= 9.0) { rankBadge.textContent = "👑 GigaChad (Max Aura)"; rankBadge.className = "text-xs font-black px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700/60"; }
+      else if (score.net >= 6.5) { rankBadge.textContent = "⚡ Locked In"; rankBadge.className = "text-xs font-black px-3 py-1 rounded-full bg-purple-950 text-purple-400 border border-purple-700/60"; }
+      else { rankBadge.textContent = "💀 NPC (Cooked)"; rankBadge.className = "text-xs font-black px-3 py-1 rounded-full bg-rose-950 text-rose-400 border border-rose-700/60"; }
+
+      document.getElementById("auraFormulaSnippet").textContent = `+${score.base} Tasks · -${score.penalty} Doomscroll ${score.bonus ? '· +' + score.bonus + ' Grass' : ''}`;
+
+      document.getElementById("valPillWorkout").textContent = log.workoutDone ? "2.5 ✓" : "0";
+      document.getElementById("valPillCal").textContent = (log.calories >= 2800) ? "2.0 ✓" : (Math.min(2.0, Math.round(((log.calories||0)/2800)*2*10)/10));
+      document.getElementById("valPillProtein").textContent = (log.protein >= 130) ? "1.5 ✓" : (Math.min(1.5, Math.round(((log.protein||0)/130)*1.5*10)/10));
+      document.getElementById("valPillSteps").textContent = (log.steps >= 8000) ? "1.5 ✓" : (Math.min(1.5, Math.round(((log.steps||0)/8000)*1.5*10)/10));
+      document.getElementById("valPillWater").textContent = (log.water >= 3.5) ? "1.0 ✓" : (Math.min(1.0, Math.round(((log.water||0)/3.5)*1*10)/10));
+      document.getElementById("valPillFiber").textContent = ((log.fiberDone||[]).length >= 3) ? "0.75 ✓" : "0";
+      document.getElementById("valPillWeight").textContent = log.weight ? "0.75 ✓" : "0";
+
+      // 4-Hour Screen Time Display
+      const st = log.screenTime || 0;
+      document.getElementById("screenTimeSlider").value = st;
+      const hours = Math.floor(st);
+      const mins = Math.round((st - hours) * 60);
+      document.getElementById("screenTimeValDisplay").textContent = `${hours}h ${mins}m`;
+
+      const penaltyBadge = document.getElementById("screenTimePenaltyBadge");
+      if (score.penalty > 0) {
+        penaltyBadge.textContent = `-${score.penalty} Pts Penalty`;
+        penaltyBadge.className = "text-xs font-bold font-mono px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-400 border border-rose-800";
+      } else {
+        penaltyBadge.textContent = "0 Pt Penalty (Clean)";
+        penaltyBadge.className = "text-xs font-bold font-mono px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800";
+      }
+
+      document.getElementById("hubWeightInput").value = log.weight || "";
+      document.getElementById("hubStepsInput").value = log.steps || "";
+      document.getElementById("waterDisplay").textContent = `${(log.water||0).toFixed(2)} L`;
+
+      document.getElementById("counterCaloriesTotal").textContent = log.calories || 0;
+      document.getElementById("counterProteinTotal").textContent = `${log.protein || 0}g / 140g`;
+      document.getElementById("counterCarbsTotal").textContent = `${log.carbs || 0}g / 400g`;
+      document.getElementById("counterFatsTotal").textContent = `${log.fats || 0}g / 75g`;
+      document.getElementById("counterFiberTotal").textContent = `${log.fiber || 0}g`;
+      document.getElementById("calorieProgressBar").style.width = `${Math.min(100, Math.round(((log.calories||0)/3000)*100))}%`;
+
+      const completeBtn = document.getElementById("completeWorkoutBtn");
+      completeBtn.textContent = log.workoutDone ? "✓ Workout Completed (+2.5 Pts)" : "✓ Complete Workout Session (+2.5 Aura Pts)";
+      completeBtn.className = log.workoutDone
+        ? "w-full py-2.5 bg-emerald-950 border border-emerald-700 text-emerald-400 font-black rounded-xl text-xs uppercase"
+        : "w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-black text-slate-950 rounded-xl text-xs uppercase tracking-wider";
+
+      renderQuickAddGrid();
+      renderFoodDiary();
+      renderFiberSeedsTracker();
+      renderExercises();
+      renderLeaderboardAndRoast();
+    }
+
+    function switchUser(id) { appState.activeUserId = id; saveState(); }
+    function openFormCuesModal() { document.getElementById("formCuesModal").classList.remove("hidden"); }
+    function closeFormCuesModal() { document.getElementById("formCuesModal").classList.add("hidden"); }
+    function openNewUserModal() { document.getElementById("newUserModal").classList.remove("hidden"); }
+    function closeNewUserModal() { document.getElementById("newUserModal").classList.add("hidden"); }
+    function openApiKeyModal() { document.getElementById("apiKeyModal").classList.remove("hidden"); }
+    function closeApiKeyModal() { document.getElementById("apiKeyModal").classList.add("hidden"); }
+    function saveApiKey() { appState.geminiApiKey = document.getElementById("geminiApiKeyInput").value.trim(); closeApiKeyModal(); saveState(); }
+
+    function createUser() {
+      const name = document.getElementById("newUserNameInput").value.trim();
+      const weight = parseFloat(document.getElementById("newUserWeightInput").value) || 60;
+      if (!name) return;
+      const newId = "u_" + Date.now();
+      appState.users.push({ id: newId, name, avatarTitle: "Gym Buddy", avatarEmoji: "🦍", currentWeight: weight, trackShare: true, logs: {} });
+      appState.activeUserId = newId;
+      closeNewUserModal();
+      saveState();
+    }
+
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const a = document.createElement("a");
+      a.href = dataStr;
+      a.download = `IronTrack_Aura_${getTodayDateString()}.json`;
+      a.click();
+    }
+
+    function importDataJSON() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json";
+      input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            appState = JSON.parse(ev.target.result);
+            saveState();
+            alert("Squad data loaded!");
+          } catch(err) { alert("Invalid JSON file"); }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    }
+
+    /* ==========================================================================
+       14. AI COACH & SQUAD ROASTER
+       ========================================================================== */
+    async function handleAiSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("aiUserInput");
+      const question = input.value.trim();
+      if (!question) return;
+
+      appendChatMessage("user", question);
+      input.value = "";
+
+      const log = getActiveDayLog();
+      const user = getActiveUser();
+
+      if (appState.geminiApiKey) {
+        appendChatMessage("ai", "Consulting Gemini Engine...");
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${appState.geminiApiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `You are a savage, witty Indian gym coach. Trainee: ${user.name} (${user.avatarTitle || 'Trainee'}), Weight: ${user.currentWeight}kg (target 68kg). Today: ${log.calories || 0} kcal, ${log.protein || 0}g protein, ${log.screenTime || 0}h screen time (limit: 4.0h). Roast brutally if screen time > 4h or protein is low using iconic Bollywood/Desi quotes. Give accurate hypertrophy advice: "${question}"`
+                }]
+              }]
+            })
+          });
+          const data = await res.json();
+          removeLastAi();
+          if (data.candidates && data.candidates[0].content) {
+            appendChatMessage("ai", data.candidates[0].content.parts[0].text);
+            return;
+          }
+        } catch(err) { removeLastAi(); }
+      }
+
+      setTimeout(() => {
+        const q = question.toLowerCase();
+        let reply = "";
+
+        if (q.includes("roast") || q.includes("sameer") || q.includes("bro")) {
+          reply = "💀 **AI Savage Roast:** Tell bro to stop doomscrolling reels past the 4-hour limit. 7 hours on phone and 0 reps of squats? Shaker bottle mein fungus ka jungle uug gaya hoga! Ramadhir Singh was right: 'Tumse na ho payega!'";
+        } else if (q.includes("protein") || q.includes("cheap")) {
+          reply = "🍗 **Cheap Indian Protein Stack:** You logged " + (log.protein||0) + "g so far. Grab 50g Nutrela soya chunks (26g protein, ₹7) + 3 whole boiled eggs (18g protein, ₹21). Total 44g pure protein under ₹30. Stop giving mummy excuses!";
+        } else if (q.includes("step") || q.includes("screentime") || q.includes("burn")) {
+          reply = `📱 **Screen Time Reality Check:** You logged **${log.screenTime || 0}h screen time** (Strict Cap: 4.0h). If you paced during rest intervals instead of doomscrolling memes, you'd hit 10,000 steps without breaking a sweat!`;
+        } else {
+          reply = `💪 **Coach Insight:** You're sitting at ${calculateDayPoints(log).net} Aura Points today. Lift heavy, eat your 3,000 kcal, and keep your screen time below 4 hours!`;
+        }
+        appendChatMessage("ai", reply);
+      }, 300);
+    }
+
+    function appendChatMessage(sender, txt) {
+      const log = document.getElementById("aiChatLog");
+      const d = document.createElement("div");
+      d.className = sender === "user"
+        ? "bg-purple-950/40 border border-purple-800/40 p-2 rounded-xl text-slate-100 ml-6 text-right"
+        : "bg-slate-800/80 border border-slate-700/60 p-2 rounded-xl text-slate-200 mr-6";
+      d.innerHTML = txt.replace(/\n/g, "<br/>");
+      log.appendChild(d);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function removeLastAi() {
+      const log = document.getElementById("aiChatLog");
+      if (log.lastElementChild) log.removeChild(log.lastElementChild);
+    }
+
+    /* ==========================================================================
+       15. PWA INSTALLATION PROMPT
+       ========================================================================== */
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById("installPwaBtn");
+      if (btn) btn.classList.remove("hidden");
+    });
+
+    function promptAppInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((res) => {
+          if (res.outcome === 'accepted') {
+            document.getElementById("installPwaBtn").classList.add("hidden");
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        alert("To install as an app on your phone:\n• iOS: Tap Safari Share > 'Add to Home Screen'\n• Android: Tap Chrome Menu (⋮) > 'Install app'");
+      }
+    }
+
+    /* ==========================================================================
+       16. INIT & BOOT
+       ========================================================================== */
+    const dInput = document.getElementById("activeDateInput");
+    dInput.max = getTodayDateString();
+    dInput.value = appState.selectedDate;
+    
+    dInput.addEventListener("change", (e) => {
+      appState.selectedDate = e.target.value;
+      saveState();
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadState();
+      dInput.max = getTodayDateString();
+      dInput.value = appState.selectedDate;
+      renderDaySelect();
+      recalculateDietTotals();
+      updateUI();
+    });
+  </script>
+</body>
+</html>
